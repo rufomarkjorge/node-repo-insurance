@@ -91,7 +91,6 @@ module.exports = {
         }
         resultsFound["userid"] = results[0].userid;
         resultsFound["data"] = token;
-        //res.send(resultsFound);
         //START*** to Insert token to Database Table login
         var sqltoken = 'UPDATE login SET ? WHERE `username` = ?';
         var userEmail = req.body.inputEmail;
