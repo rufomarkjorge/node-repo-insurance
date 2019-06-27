@@ -81,12 +81,13 @@ module.exports = {
           }
           bcrypt.compare(req.body.inputPassword, results[0].password, function (err, result) {
       if (result == true) {
+        //console.log(results[0].userid);
         var token = {
           "token": jwt.sign(
-            { email: req.body.inputEmail },
+            { userid: results[0].userid },
             process.env.JWT_SECRET,
             { expiresIn: "30d" }
-          )  
+          )
         }
         resultsFound["userid"] = results[0].userid;
         resultsFound["data"] = token;
@@ -120,10 +121,17 @@ module.exports = {
       if (err) throw err; // not connected!
 
         var sql = 'SELECT * FROM user_profile JOIN tblpolicy ON user_profile.userid = tblpolicy.userid WHERE user_profile.userid = ?';
-        var values = [req.body.userid]
-        console.log(req.body.userid);
+        //var values = [req.body.userid];
+        //get userid using token
+        const token = req.headers.token;
+        var uid = jwt.verify(
+          token.replace('Bearer ', ''),
+          process.env.JWT_SECRET
+          );
+        //console.log(uid.userid);
         // Use the connection
-        connection.query(sql, values, function (error, results, fields) {
+        connection.query(sql, uid.userid, function (error, results, fields) {
+          console.log(results);
           if (error) {
             resultsNotFound["errorMessage"] = "Something went wrong with Server.";
             return res.send(resultsNotFound);
