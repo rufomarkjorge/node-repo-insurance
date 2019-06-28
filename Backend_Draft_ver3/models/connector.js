@@ -217,5 +217,13 @@ module.exports = {
 			}
 		});
 		return false;
-	}
+  },
+  
+  encrypt: function(req,res){
+    bcrypt.hash(req.body.inputPassword, saltRounds, function (err, hash) {
+      console.log(hash);
+  res.send(hash)
+    });
+
+  }
 };
