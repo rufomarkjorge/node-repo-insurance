@@ -181,10 +181,15 @@ module.exports = {
       if (err) throw err; // not connected!
 
         var sql = 'SELECT * FROM `tblpolicy` WHERE `userid` = ?';
-        var values = [req.body.userid]
-        console.log(req.body.userid);
+        const token = req.headers.token;
+        var uid = jwt.verify(
+          token.replace('Bearer ', ''),
+          process.env.JWT_SECRET
+          );
+        //var values = [req.body.userid]
+        //console.log(req.body.userid);
         // Use the connection
-        connection.query(sql, values, function (error, results, fields) {
+        connection.query(sql, uid.userid, function (error, results, fields) {
           if (error) {
             resultsNotFound["errorMessage"] = "Something went wrong with Server.";
             return res.send(resultsNotFound);

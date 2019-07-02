@@ -5,6 +5,11 @@ const app = express();
 require('dotenv').config();
 const cors = require('cors');
 
+//**for upload files */
+const  multipart  =  require('connect-multiparty');
+const  multipartMiddleware  =  multipart({ uploadDir:  './file_uploads' });
+//**for upload files */
+
 // ****** allow cross-origin requests code START ****** //
 app.use(cors()); // uncomment this to enable all CORS and delete cors(corsOptions) in below code
 const allowedOrigins = process.env.allowedOrigins.split(',');
@@ -72,6 +77,14 @@ app.post('/bot', jsonParser, function (req, res) {
     console.log(req.query.request);
     var dbFunctions = require('./models/connector');
     dbFunctions.pushChat(req,res);
+});
+//**file upload */
+app.post('/file_upload', multipartMiddleware, function (req, res) {
+    console.log(req);
+    if(valFunctions.checkJWTToken(req,res)) return false;
+    res.json({
+        'message': 'File uploaded successfully'
+    });
 });
 
 app.post('/encrypt', jsonParser, function (req, res) {
