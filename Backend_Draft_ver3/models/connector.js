@@ -2,6 +2,7 @@ const pool = require('./dbconnection');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const jwt = require('jsonwebtoken');
+const jsonQuery = require('json-query');
 
 var resultsNotFound = {
   "errorCode": "0",
@@ -14,6 +15,13 @@ var resultsFound = {
   "errorMessage": "Operation successful.",
   "rowCount": "1",
   "data": ""
+};
+
+var resultsFoundPolicy = {
+  "errorCode": "1",
+  "errorMessage": "Operation successful.",
+  "rowCount": "1",
+  "data": {"policy":"","coverage":"","beneficiary":"","type":""}
 };
 
 var tokenUpdated = {
@@ -139,9 +147,14 @@ module.exports = {
             resultsNotFound["errorMessage"] = "User Id not found.";
             return res.send(resultsNotFound);
           }
-          resultsFound["data"] = results;
+           if(results !=="") {
+            resultsFound["data"] = results;
+          
           res.send(resultsFound);
+    
           console.log(results);
+          }
+          
           // When done with the connection, release it.
           connection.release(); // Handle error after the release.
           if (error) throw error; // Don't use the connection here, it has been returned to the pool.
@@ -180,7 +193,8 @@ module.exports = {
     pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
 
-        var sql = 'SELECT * FROM `tblpolicy` WHERE `userid` = ?';
+        var sql = 'SELECT userid, policynumber, insuredname, status, faceamount, paymentmode, premiumamount, reg_billed_prem, premiumdt, totalamtdue, type, "coverage" FROM `tblpolicy` WHERE `userid` = ?';
+        //console.log(req.headers.token);
         const token = req.headers.token;
         var uid = jwt.verify(
           token.replace('Bearer ', ''),
@@ -191,16 +205,219 @@ module.exports = {
         // Use the connection
         connection.query(sql, uid.userid, function (error, results, fields) {
           if (error) {
-            resultsNotFound["errorMessage"] = "Something went wrong with Server.";
+            resultsFoundPolicy["errorMessage"] = "Something went wrong with Server.";
+            return res.send(resultsFoundPolicy);
+          }
+          if (results =="") {
+            resultsFoundPolicy["errorMessage"] = "User Id not found.";
+            return res.send(resultsFoundPolicy);
+          }
+          resultsFoundPolicy["data"]["policy"] = results;
+        
+          res.send(resultsFoundPolicy);
+          console.log(resultsFoundPolicy);
+          // When done with the connection, release it.
+          connection.release(); // Handle error after the release.
+          if (error) throw error; // Don't use the connection here, it has been returned to the pool.
+        });
+      });
+  },
+  getCoverage: function(req,res){
+    //console.log(req);
+    pool.getConnection(function (err, connection) {
+      if (err) throw err; // not connected!
+      const policynum = req.query.policynumber;
+      console.log(policynum);
+
+        var sqlcoverage = 'SELECT * FROM `tblcoverage` WHERE `policynumber` = ? and `userid`=?';
+        const token = req.headers.token;
+        var uid = jwt.verify(
+          token.replace('Bearer ', ''),
+          process.env.JWT_SECRET
+          );
+          const policynumber = req.query.policynumber;
+        connection.query(sqlcoverage, [policynumber,uid.userid], function (error, results, fields) {
+          if (error) {
+            resultsFound["errorMessage"] = "Something went wrong with Server.";
             return res.send(resultsNotFound);
           }
           if (results =="") {
-            resultsNotFound["errorMessage"] = "User Id not found.";
+            resultsFound["errorMessage"] = "User Id not found.";
             return res.send(resultsNotFound);
           }
-          resultsFound["data"] = results;
-          res.send(resultsFound);
-          console.log(results);
+          if (results!==""){
+            resultsFoundPolicy["data"]["coverage"] = results;
+            res.send(resultsFoundPolicy);
+            console.log("this is the result"+resultsFoundPolicy);
+            // When done with the connection, release it.
+          }
+        
+          connection.release(); // Handle error after the release.
+          if (error) throw error; // Don't use the connection here, it has been returned to the pool.
+        });
+      });
+  },
+  getBeneficiary: function(req,res){
+    //console.log(req);
+    pool.getConnection(function (err, connection) {
+      if (err) throw err; // not connected!
+      const policynum = req.query.policynumber;
+      console.log(policynum);
+
+        var sqlcoverage = 'SELECT * FROM `tblbeneficiary` WHERE `policynumber` = ? and exists (select userid from `tblpolicy` where `userid` =? and `policynumber` = ?)';
+        const token = req.headers.token;
+        var uid = jwt.verify(
+          token.replace('Bearer ', ''),
+          process.env.JWT_SECRET
+          );
+          const policynumber = req.query.policynumber;
+        connection.query(sqlcoverage, [policynumber,uid.userid,policynumber], function (error, results, fields) {
+          if (error) {
+            resultsFound["errorMessage"] = "Something went wrong with Server.";
+            return res.send(resultsNotFound);
+          }
+          if (results =="") {
+            resultsFound["errorMessage"] = "User Id not found.";
+            return res.send(resultsNotFound);
+          }
+          if (results!==""){
+            resultsFoundPolicy["data"]["beneficiary"] = results;
+            res.send(resultsFoundPolicy);
+            console.log("this is the result"+resultsFoundPolicy);
+            // When done with the connection, release it.
+          }
+        
+          connection.release(); // Handle error after the release.
+          if (error) throw error; // Don't use the connection here, it has been returned to the pool.
+        });
+      });
+  },
+  getPolicyLife: function (req, res) {
+    pool.getConnection(function (err, connection) {
+      if (err) throw err; // not connected!
+
+        var sql = 'SELECT * FROM `tblpolicy` WHERE `type`=? and `userid` = ?';
+        //console.log(req.headers.token);
+        const token = req.headers.token;
+        
+        var uid = jwt.verify(
+          token.replace('Bearer ', ''),
+          process.env.JWT_SECRET
+          );
+        //userid = '33333';
+        //var values = [req.body.userid]
+        //console.log(req.body.userid);
+        // Use the connection
+        connection.query(sql, ["life",uid.userid], function (error, results, fields) {
+          if (error) {
+            resultsFoundPolicy["errorMessage"] = "Something went wrong with Server." + error;
+            return res.send(resultsNotFound);
+          }
+          if (results =="") {
+            resultsFoundPolicy["errorMessage"] = "User Id not found.";
+            return res.send(resultsNotFound);
+          }
+          if (results!==""){
+            resultsFoundPolicy["data"]["policy"] = results;
+
+            //var policynum = resultsFoundPolicy["data"]["policy"][0]["policynumber"];
+  
+           //console.log("policynumber " + policynum);
+           
+            res.send(resultsFoundPolicy);
+            //module.exports.getCoverage(request.body.policynum=policynum,response);
+
+          }
+         
+          console.log(resultsFoundPolicy);
+          // When done with the connection, release it.
+          connection.release(); // Handle error after the release.
+          if (error) throw error; // Don't use the connection here, it has been returned to the pool.
+        });
+      });
+  },
+  getPolicyHealth: function (req, res) {
+    pool.getConnection(function (err, connection) {
+      if (err) throw err; // not connected!
+
+        var sql = 'SELECT * FROM `tblpolicy` WHERE `type`=? and `userid` = ?';
+        //console.log(req.headers.token);
+        const token = req.headers.token;
+        
+        var uid = jwt.verify(
+          token.replace('Bearer ', ''),
+          process.env.JWT_SECRET
+          );
+        //userid = '33333';
+        //var values = [req.body.userid]
+        //console.log(req.body.userid);
+        // Use the connection
+        connection.query(sql, ["health",uid.userid], function (error, results, fields) {
+          if (error) {
+            resultsFoundPolicy["errorMessage"] = "Something went wrong with Server." + error;
+            return res.send(resultsNotFound);
+          }
+          if (results =="") {
+            resultsFoundPolicy["errorMessage"] = "User Id not found.";
+            return res.send(resultsNotFound);
+          }
+          if (results!==""){
+            resultsFoundPolicy["data"]["policy"] = results;
+
+            //var policynum = resultsFoundPolicy["data"]["policy"][0]["policynumber"];
+  
+           //console.log("policynumber " + policynum);
+           
+            res.send(resultsFoundPolicy);
+            //module.exports.getCoverage(request.body.policynum=policynum,response);
+
+          }
+         
+          console.log(resultsFoundPolicy);
+          // When done with the connection, release it.
+          connection.release(); // Handle error after the release.
+          if (error) throw error; // Don't use the connection here, it has been returned to the pool.
+        });
+      });
+  },
+  getPolicyType: function (req, res) {
+    pool.getConnection(function (err, connection) {
+      if (err) throw err; // not connected!
+
+        var sql = 'SELECT policynumber,type FROM `tblpolicy` WHERE `userid` = ?';
+        //console.log(req.headers.token);
+        const token = req.headers.token;
+        
+        var uid = jwt.verify(
+          token.replace('Bearer ', ''),
+          process.env.JWT_SECRET
+          );
+        //userid = '33333';
+        //var values = [req.body.userid]
+        //console.log(req.body.userid);
+        // Use the connection
+        connection.query(sql, [uid.userid], function (error, results, fields) {
+          if (error) {
+            resultsFoundPolicy["errorMessage"] = "Something went wrong with Server." + error;
+            return res.send(resultsNotFound);
+          }
+          if (results =="") {
+            resultsFoundPolicy["errorMessage"] = "User Id not found.";
+            return res.send(resultsNotFound);
+          }
+          if (results!==""){
+            resultsFoundPolicy["data"]["type"] = results;
+
+            //var policynum = resultsFoundPolicy["data"]["policy"][0]["policynumber"];
+  
+           //console.log("policynumber " + policynum);
+           
+            res.send(resultsFoundPolicy);
+            //module.exports.getCoverage(request.body.policynum=policynum,response);
+
+          }
+         
+          console.log(resultsFoundPolicy);
           // When done with the connection, release it.
           connection.release(); // Handle error after the release.
           if (error) throw error; // Don't use the connection here, it has been returned to the pool.
@@ -239,3 +456,4 @@ module.exports = {
 
   }
 };
+
