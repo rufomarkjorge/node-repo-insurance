@@ -3,6 +3,9 @@ const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const jwt = require('jsonwebtoken');
 const jsonQuery = require('json-query');
+const nodemailer = require('nodemailer');
+const smtpTransport = require('nodemailer-smtp-transport');
+const generator = require('generate-password');
 
 var resultsNotFound = {
   "errorCode": "0",
@@ -454,6 +457,97 @@ module.exports = {
   res.send(hash)
     });
 
+  },
+  //SharePolicy and send email
+  updateShared: function(req, res) {
+    var func = this;
+    pool.getConnection(function (err, connection) {
+	  if (err) throw err; // not connected!
+		var sql = 'SELECT * FROM tblbeneficiary WHERE emailadd = ? and policynumber = ?';
+		var sqlupd = 'UPDATE tblbeneficiary SET ? WHERE emailadd = ? and policynumber = ?';
+    var slqinsert = 'INSERT INTO login SET ?';
+    var token = req.headers.token;
+    var uid = jwt.verify(
+      token.replace('Bearer ', ''),
+      process.env.JWT_SECRET
+      );
+    var userid = 'BEN';
+		var emailadd = req.query.email;
+    var policynumber = req.query.policynumber;
+    var shared = {'shared': 'Y'};
+    var password = generator.generate({
+      length: 10,
+      numbers: true
+      });
+    bcrypt.hash(password, saltRounds, function (err, hash) {
+      console.log("THIS is the TEMPORARY PASSWORD", password)
+		  var beninsert = { 'userid': userid+=uid.userid,'username':emailadd, 'password': hash, 'role': 'BEN'}
+      connection.query(sql, [emailadd, policynumber], function (error, results, fields) {
+        if (error) {
+          resultsNotFound["errorMessage"] = "Something went wrong with Server.";
+          return res.send(resultsNotFound);
+        }
+        if (results =="") {
+          resultsNotFound["errorMessage"] = "No records found";
+          return res.send(resultsNotFound);
+        }
+		    connection.query(sqlupd, [shared,emailadd, policynumber], function (error, results, fields) {
+			    if (error) {
+				    resultsNotFound["errorMessage"] = "Something went wrong with Server.";
+				    return res.send(resultsNotFound);
+			    }
+			    resultsFound["errorMessage"] = "Shared set to Y."
+          connection.query(slqinsert, beninsert, function (error, results, fields) {
+            if (error) {
+              resultsNotFound["errorMessage"] = "Something went wrong with Server.";
+              return res.send(resultsNotFound);
+            }
+            resultsFound["errorMessage"] = "Temporary username and password created."
+            mailparams["email"] = emailadd;
+            mailparams["tempass"]= password;
+            func.sendEmail(mailparams, res);
+            //res.send(resultsFound);
+          });
+        
+		  });
+      // When done with the connection, release it.
+      connection.release(); // Handle error after the release.
+      if (error) throw error; // Don't use the connection here, it has been returned to the pool.
+    });
+  });
+});
+  },
+  sendEmail: function sendEmail(mailparams, res){
+    console.log(mailparams);
+    var transporter = nodemailer.createTransport(smtpTransport({
+      //service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 465,
+      auth: {
+        user: process.env.emailadd,
+        pass: process.env.emailpass,
+      }
+    }));
+
+    var mailOptions = {
+      from: 'InsuranceSharePolicy <insurancepolicysharing@gmail.com>',
+      to: 'batbatchoychoy@gmail.com',//mailparams.email,
+      subject: 'Insurance Policy Sharing',
+      text: `Hi , This is your temporary password ` + mailparams.tempass
+      // html: '<h1>Hi Smartherd</h1><p>Your Messsage</p>'        
+    };
+    transporter.sendMail(mailOptions, function(error, info){
+      if (error) {
+        console.log(error);
+        resultsNotFound["errorMessage"] = "Email Not Sent. Policy not shared.";
+        //func.updateShared(req, res);
+        return res.send(resultsNotFound);
+      } else {
+        console.log('Email sent: ' + info.response);
+        resultsFound["errorMessage"] = "Email Sent.";
+        res.send(resultsFound);
+      }
+    });
   }
 };
 

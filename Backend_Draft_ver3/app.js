@@ -137,5 +137,14 @@ app.post('/encrypt', jsonParser, function (req, res) {
     dbFunctions.encrypt(req,res);
 });
 
+//**Share policy and send email */
+app.post('/share_policy', jsonParser, function (req, res) {
+    console.log(req.params.email);
+    if(valFunctions.checkInputDataNULL(req,res)) return false;
+    if(valFunctions.checkJWTToken(req,res)) return false;
+    var dbFunctions = require('./models/connector');
+    dbFunctions.updateShared(req,res);
+});
+
 app.use('/', (req, res) => res.send("Welcome!"));
 app.listen(process.env.PORT, () => console.log('Server is ready on localhost:' + process.env.PORT));
