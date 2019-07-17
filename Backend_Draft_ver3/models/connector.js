@@ -6,7 +6,7 @@ const jsonQuery = require('json-query');
 const nodemailer = require('nodemailer');
 const smtpTransport = require('nodemailer-smtp-transport');
 const generator = require('generate-password');
-
+var mailparams={"email":"","tempass":""};
 var resultsNotFound = {
   "errorCode": "0",
   "errorMessage": "Operation not successful.",
@@ -260,7 +260,7 @@ module.exports = {
         });
       });
   },
-  getBeneficiary: function(req,res){
+  getBeneficiary: function(req,res){ //Get the beneficiaries 
     //console.log(req);
     pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
@@ -295,7 +295,7 @@ module.exports = {
         });
       });
   },
-  getPolicyLife: function (req, res) {
+  getPolicyLife: function (req, res) { //Get policy where type is Life
     pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
 
@@ -339,7 +339,7 @@ module.exports = {
         });
       });
   },
-  getPolicyHealth: function (req, res) {
+  getPolicyHealth: function (req, res) { //Get policies where type is Health
     pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
 
@@ -383,7 +383,7 @@ module.exports = {
         });
       });
   },
-  getPolicyType: function (req, res) {
+  getPolicyType: function (req, res) { //Get policy types using userid
     pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
 
@@ -466,7 +466,9 @@ module.exports = {
 		var sql = 'SELECT * FROM tblbeneficiary WHERE emailadd = ? and policynumber = ?';
 		var sqlupd = 'UPDATE tblbeneficiary SET ? WHERE emailadd = ? and policynumber = ?';
     var slqinsert = 'INSERT INTO login SET ?';
+  
     var token = req.headers.token;
+  
     var uid = jwt.verify(
       token.replace('Bearer ', ''),
       process.env.JWT_SECRET
@@ -503,6 +505,7 @@ module.exports = {
               return res.send(resultsNotFound);
             }
             resultsFound["errorMessage"] = "Temporary username and password created."
+            
             mailparams["email"] = emailadd;
             mailparams["tempass"]= password;
             func.sendEmail(mailparams, res);
@@ -531,10 +534,14 @@ module.exports = {
 
     var mailOptions = {
       from: 'InsuranceSharePolicy <insurancepolicysharing@gmail.com>',
-      to: 'batbatchoychoy@gmail.com',//mailparams.email,
+      //to: 'batbatchoychoy@gmail.com',//mailparams.email,
+      to: mailparams.email,
+      cc: 'betbetrizal@gmail.com',
       subject: 'Insurance Policy Sharing',
-      text: `Hi , This is your temporary password ` + mailparams.tempass
-      // html: '<h1>Hi Smartherd</h1><p>Your Messsage</p>'        
+      //text: `Hi , This is your temporary password ` + mailparams.tempass
+      html: '<img src="cid:welcome"/><br><h3>Hi '+mailparams.email+'</h3><br><p>"Someone" shared his/her policy to you. Kindly download the app and login to view the policy details.</p><br><p>Below is your temporary login account.</p><p>Username: '+mailparams.email+'</p><p>Password: '+mailparams.tempass+'</p>',
+      attachments: [{filename: 'welcome.png',path: 'file_uploads/welcome.png',cid: 'welcome' //same cid value as in the html img src
+    }]
     };
     transporter.sendMail(mailOptions, function(error, info){
       if (error) {

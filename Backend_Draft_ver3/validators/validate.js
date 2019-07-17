@@ -16,6 +16,7 @@ module.exports = {
       },
     checkJWTToken: function(req, res) {
         const token = req.headers.token;
+        console.log('this is the header: '+token);
         if (!token) res.sendStatus(400);
         const decoded = jwt.verify(
         token.replace('Bearer ', ''),
