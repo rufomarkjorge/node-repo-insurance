@@ -113,6 +113,14 @@ app.get('/policies/beneficiary', jsonParser, function (req, res) {
     var dbFunctions = require('./models/connector');
     dbFunctions.getBeneficiary(req,res);
 });
+app.post('/agent-list', jsonParser, function (req, res) {
+   // if(valFunctions.checkInputDataNULL(req,res)) return false;
+    //if(valFunctions.checkInputDataQuality(req,res)) return false;
+    //if(valFunctions.checkJWTToken(req,res)) return false;
+    //if(valFunctions.checkUserAuthRole(req,res)) return false;
+    var dbFunctions = require('./models/connector');
+    dbFunctions.getReferral(req,res);
+});
 app.post('/bot', jsonParser, function (req, res) {
     console.log(req.query.request);
     var dbFunctions = require('./models/connector');

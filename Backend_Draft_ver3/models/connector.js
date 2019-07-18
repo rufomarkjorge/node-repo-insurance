@@ -427,6 +427,51 @@ module.exports = {
         });
       });
   },
+  getReferral: function (req, res) { //Get policy where type is Life
+    pool.getConnection(function (err, connection) {
+      if (err) throw err; // not connected!
+
+        var sql = 'SELECT agentid, (select concat(fname," ",lname) from user_profile where userid=tblreferral.referrerid)as referrer, referral_name, referral_contact, date_referred, life_score, health_score, education_score, status FROM tblreferral WHERE tblreferral.agentid=?';
+        //console.log(req.headers.token);
+        const token = req.headers.token;
+        const agent = req.query.agentid;
+        console.log('agent id is: '+agent);
+        // var uid = jwt.verify(
+        //   token.replace('Bearer ', ''),
+        //   process.env.JWT_SECRET
+        //   );
+        //userid = '33333';
+        //var values = [req.body.userid]
+        //console.log(req.body.userid);
+        // Use the connection
+        connection.query(sql, [agent], function (error, results, fields) {
+          if (error) {
+            resultsNotFound["errorMessage"] = "Something went wrong with Server." + error;
+            return res.send(resultsNotFound);
+          }
+          if (results =="") {
+            resultsNotFound["errorMessage"] = "Agent records does not exist.";
+            return res.send(resultsNotFound);
+          }
+          if (results!==""){
+            resultsFound["data"] = results;
+
+            //var policynum = resultsFoundPolicy["data"]["policy"][0]["policynumber"];
+  
+           //console.log("policynumber " + policynum);
+           
+            res.send(resultsFound);
+            //module.exports.getCoverage(request.body.policynum=policynum,response);
+
+          }
+         
+          console.log(resultsFound);
+          // When done with the connection, release it.
+          connection.release(); // Handle error after the release.
+          if (error) throw error; // Don't use the connection here, it has been returned to the pool.
+        });
+      });
+  },
   //CHATBOT-ver1
   pushChat: function pushChat(req, res) {
 		console.log("PUSHCHAT",req.query.request);
