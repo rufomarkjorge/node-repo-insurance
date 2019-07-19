@@ -299,30 +299,58 @@ module.exports = {
     pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
 
-        var sql = 'SELECT * FROM `tblpolicy` WHERE `type`=? and `userid` = ?';
         //console.log(req.headers.token);
         const token = req.headers.token;
-        
+        var sql = 'SELECT * FROM `tblpolicy` WHERE `type` = ? and `userid` = ?';
         var uid = jwt.verify(
           token.replace('Bearer ', ''),
           process.env.JWT_SECRET
           );
-        //userid = '33333';
-        //var values = [req.body.userid]
-        //console.log(req.body.userid);
-        // Use the connection
-        connection.query(sql, ["life",uid.userid], function (error, results, fields) {
+        var userid = uid.userid;
+        var benid = userid.replace("BEN","");
+        console.log(benid);
+        console.log(userid)
+        //check if Beneficiary
+        var checkben = userid.substring(0,3);
+        //if beneficiary
+        if (checkben == "BEN"){
+            var policysql = 'SELECT policynumber FROM `tblbeneficiary` WHERE `dependentuserid` = ?';
+            connection.query(policysql, userid, function (error, results, fields) {
+              var policynumber = results[0]["policynumber"];
+              var bensql = 'SELECT * FROM `tblpolicy` WHERE `userid` = ? and `policynumber` = ?';
+              connection.query(bensql, [benid,policynumber], function (error, results, fields) {
+                if (error) {
+                  resultsFoundPolicy["errorMessage"] = "Something went wrong with Server." + error;
+                  return res.send(resultsNotFound);
+                }
+                if (results =="") {
+                  resultsFoundPolicy["errorMessage"] = "User Id not found.";
+                  return res.send(resultsNotFound);
+                }
+                if (results!==""){
+                  console.log(results);
+                  resultsFoundPolicy["data"]["policy"] = results;
+                  res.send(resultsFoundPolicy);
+                }
+              });
+            });
+          }
+        //else
+        if (checkben !== "BEN"){
+        connection.query(sql, ["life",userid], function (error, results, fields) {
           if (error) {
+            console.log(error);
             resultsFoundPolicy["errorMessage"] = "Something went wrong with Server." + error;
             return res.send(resultsNotFound);
           }
           if (results =="") {
+            console.log("HERE2");
             resultsFoundPolicy["errorMessage"] = "User Id not found.";
             return res.send(resultsNotFound);
           }
           if (results!==""){
             resultsFoundPolicy["data"]["policy"] = results;
-
+            console.log("HERE");
             //var policynum = resultsFoundPolicy["data"]["policy"][0]["policynumber"];
   
            //console.log("policynumber " + policynum);
@@ -337,6 +365,7 @@ module.exports = {
           connection.release(); // Handle error after the release.
           if (error) throw error; // Don't use the connection here, it has been returned to the pool.
         });
+      }
       });
   },
   getPolicyHealth: function (req, res) { //Get policies where type is Health
@@ -518,17 +547,17 @@ module.exports = {
       token.replace('Bearer ', ''),
       process.env.JWT_SECRET
       );
-    var userid = 'BEN';
+    var ben = 'BEN';
 		var emailadd = req.query.email;
     var policynumber = req.query.policynumber;
-    var shared = {'shared': 'Y'};
+    var shared = {'dependentuserid': ben+=uid.userid,'shared': 'Y'};
     var password = generator.generate({
       length: 10,
       numbers: true
       });
     bcrypt.hash(password, saltRounds, function (err, hash) {
       console.log("THIS is the TEMPORARY PASSWORD", password)
-		  var beninsert = { 'userid': userid+=uid.userid,'username':emailadd, 'password': hash, 'role': 'BEN'}
+		  var beninsert = { 'userid': ben+=uid.userid,'username':emailadd, 'password': hash, 'role': 'BEN'}
       connection.query(sql, [emailadd, policynumber], function (error, results, fields) {
         if (error) {
           resultsNotFound["errorMessage"] = "Something went wrong with Server.";
