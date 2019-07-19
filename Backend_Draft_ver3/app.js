@@ -13,6 +13,7 @@ const  multipartMiddleware  =  multipart({ uploadDir:  './file_uploads' });
 // ****** allow cross-origin requests code START ****** //
 app.use(cors()); // uncomment this to enable all CORS and delete cors(corsOptions) in below code
 const allowedOrigins = process.env.allowedOrigins.split(',');
+app.use(express.static('img/profile'));
 /**
 app.use(cors({
     origin: function (origin, callback) {
