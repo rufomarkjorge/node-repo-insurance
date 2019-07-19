@@ -6,7 +6,7 @@ const jsonQuery = require('json-query');
 const nodemailer = require('nodemailer');
 const smtpTransport = require('nodemailer-smtp-transport');
 const generator = require('generate-password');
-var mailparams={"email":"","tempass":"","policyholderemail":""};
+var mailparams={"email":"","tempass":""};
 var resultsNotFound = {
   "errorCode": "0",
   "errorMessage": "Operation not successful.",
@@ -652,4 +652,3 @@ module.exports = {
     });
   }
 };
-
