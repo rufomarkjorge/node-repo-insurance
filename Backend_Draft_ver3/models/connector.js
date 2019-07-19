@@ -6,7 +6,7 @@ const jsonQuery = require('json-query');
 const nodemailer = require('nodemailer');
 const smtpTransport = require('nodemailer-smtp-transport');
 const generator = require('generate-password');
-var mailparams={"email":"","tempass":""};
+var mailparams={"email":"","tempass":"","policyholderemail":""};
 var resultsNotFound = {
   "errorCode": "0",
   "errorMessage": "Operation not successful.",
@@ -540,7 +540,8 @@ module.exports = {
 		var sql = 'SELECT * FROM tblbeneficiary WHERE emailadd = ? and policynumber = ?';
 		var sqlupd = 'UPDATE tblbeneficiary SET ? WHERE emailadd = ? and policynumber = ?';
     var slqinsert = 'INSERT INTO login SET ?';
-  
+    var sqlholderemail = 'SELECT * FROM `user_profile` where `userid`=?';
+
     var token = req.headers.token;
   
     var uid = jwt.verify(
@@ -550,14 +551,14 @@ module.exports = {
     var ben = 'BEN';
 		var emailadd = req.query.email;
     var policynumber = req.query.policynumber;
-    var shared = {'dependentuserid': ben+=uid.userid,'shared': 'Y'};
+    var shared = {'dependentuserid': "BEN"+uid.userid,'shared': 'Y'};
     var password = generator.generate({
       length: 10,
       numbers: true
       });
     bcrypt.hash(password, saltRounds, function (err, hash) {
       console.log("THIS is the TEMPORARY PASSWORD", password)
-		  var beninsert = { 'userid': ben+=uid.userid,'username':emailadd, 'password': hash, 'role': 'BEN'}
+		  var beninsert = { 'userid': ben+uid.userid,'username':emailadd, 'password': hash, 'role': 'BEN'}
       connection.query(sql, [emailadd, policynumber], function (error, results, fields) {
         if (error) {
           resultsNotFound["errorMessage"] = "Something went wrong with Server.";
@@ -578,12 +579,19 @@ module.exports = {
               resultsNotFound["errorMessage"] = "Something went wrong with Server.";
               return res.send(resultsNotFound);
             }
-            resultsFound["errorMessage"] = "Temporary username and password created."
-            
-            mailparams["email"] = emailadd;
-            mailparams["tempass"]= password;
-            func.sendEmail(mailparams, res);
-            //res.send(resultsFound);
+            connection.query(sqlholderemail, uid.userid, function (error, results, fields) {
+              if (error) {
+                resultsNotFound["errorMessage"] = "Something went wrong with Server.";
+                return res.send(resultsNotFound);
+              }
+              resultsFound["errorMessage"] = "Temporary username and password created."
+              mailparams["email"] = emailadd;
+              mailparams["tempass"]= password;
+              mailparams["policyholderemail"]=results[0].emailadd;
+              func.sendEmail(mailparams, res);
+              //console.log(mailparams);
+              //res.send(resultsFound);
+            })
           });
         
 		  });
@@ -606,27 +614,40 @@ module.exports = {
       }
     }));
 
-    var mailOptions = {
+    var mailOptions_ben = {
       from: 'InsuranceSharePolicy <insurancepolicysharing@gmail.com>',
       //to: 'batbatchoychoy@gmail.com',//mailparams.email,
       to: mailparams.email,
-      cc: 'betbetrizal@gmail.com',
+      //cc: 'betbetrizal@gmail.com',
       subject: 'Insurance Policy Sharing',
       //text: `Hi , This is your temporary password ` + mailparams.tempass
       html: '<img src="cid:welcome"/><br><h3>Hi '+mailparams.email+'</h3><br><p>"Someone" shared his/her policy to you. Kindly download the app and login to view the policy details.</p><br><p>Below is your temporary login account.</p><p>Username: '+mailparams.email+'</p><p>Password: '+mailparams.tempass+'</p>',
       attachments: [{filename: 'welcome.png',path: 'file_uploads/welcome.png',cid: 'welcome' //same cid value as in the html img src
     }]
     };
-    transporter.sendMail(mailOptions, function(error, info){
+    var mailOptions_holder = {
+      from: 'InsuranceSharePolicy <insurancepolicysharing@gmail.com>',
+      //to: 'rupaxniupadi12@gmail.com',//mailparams.email,
+      to: mailparams.policyholderemail,
+      //cc: 'betbetrizal@gmail.com',
+      subject: 'Insurance Policy Sharing',
+      text: `Hi , This is email receipt for Policy Holder`
+      //html: '<img src="cid:welcome"/><br><h3>Hi '+mailparams.email+'</h3><br><p>"Someone" shared his/her policy to you. Kindly download the app and login to view the policy details.</p><br><p>Below is your temporary login account.</p><p>Username: '+mailparams.email+'</p><p>Password: '+mailparams.tempass+'</p>',
+      //attachments: [{filename: 'welcome.png',path: 'file_uploads/welcome.png',cid: 'welcome' //same cid value as in the html img src
+    };
+    transporter.sendMail(mailOptions_ben, function(error, info){
       if (error) {
         console.log(error);
         resultsNotFound["errorMessage"] = "Email Not Sent. Policy not shared.";
         //func.updateShared(req, res);
         return res.send(resultsNotFound);
       } else {
-        console.log('Email sent: ' + info.response);
-        resultsFound["errorMessage"] = "Email Sent.";
-        res.send(resultsFound);
+        console.log(mailparams.policyholderemail);
+        transporter.sendMail(mailOptions_holder, function(error, info){
+          console.log('Email sent: ' + info.response);
+          resultsFound["errorMessage"] = "Email Sent.";
+          res.send(resultsFound);
+          });
       }
     });
   }
