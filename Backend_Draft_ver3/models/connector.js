@@ -155,7 +155,7 @@ module.exports = {
           
           res.send(resultsFound);
     
-          console.log(results);
+        //  console.log(results);
           }
           
           // When done with the connection, release it.
@@ -218,7 +218,7 @@ module.exports = {
           resultsFoundPolicy["data"]["policy"] = results;
         
           res.send(resultsFoundPolicy);
-          console.log(resultsFoundPolicy);
+         // console.log(resultsFoundPolicy);
           // When done with the connection, release it.
           connection.release(); // Handle error after the release.
           if (error) throw error; // Don't use the connection here, it has been returned to the pool.
@@ -226,7 +226,7 @@ module.exports = {
       });
   },
   getCoverage: function(req,res){
-    //console.log(req);
+    resultsFoundPolicy["data"]["coverage"] = "";
     pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
       const policynum = req.query.policynumber;
@@ -241,17 +241,22 @@ module.exports = {
           const policynumber = req.query.policynumber;
         connection.query(sqlcoverage, [policynumber,uid.userid], function (error, results, fields) {
           if (error) {
-            resultsFound["errorMessage"] = "Something went wrong with Server.";
+            resultsFoundPolicy["errorMessage"] = "Something went wrong with Server.";
+            resultsFoundPolicy["errorCode"]="0";
+            
             return res.send(resultsNotFound);
           }
           if (results =="") {
-            resultsFound["errorMessage"] = "User Id not found.";
+            resultsFoundPolicy["errorCode"]="0";
+            resultsFoundPolicy["errorMessage"] = "User Id not found.";
+   
             return res.send(resultsNotFound);
           }
           if (results!==""){
+            resultsFoundPolicy["errorCode"]="1";
             resultsFoundPolicy["data"]["coverage"] = results;
             res.send(resultsFoundPolicy);
-            console.log("this is the result"+resultsFoundPolicy);
+            //console.log("this is the result"+resultsFoundPolicy);
             // When done with the connection, release it.
           }
         
@@ -261,7 +266,7 @@ module.exports = {
       });
   },
   getBeneficiary: function(req,res){ //Get the beneficiaries 
-    //console.log(req);
+    resultsFoundPolicy["data"]["beneficiary"] = "";
     pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
       const policynum = req.query.policynumber;
@@ -276,14 +281,21 @@ module.exports = {
           const policynumber = req.query.policynumber;
         connection.query(sqlcoverage, [policynumber,uid.userid,policynumber], function (error, results, fields) {
           if (error) {
-            resultsFound["errorMessage"] = "Something went wrong with Server.";
+            resultsFoundPolicy["errorCode"]="0";
+            resultsFoundPolicy["errorMessage"] = "Something went wrong with Server.";
+            
             return res.send(resultsNotFound);
           }
           if (results =="") {
-            resultsFound["errorMessage"] = "User Id not found.";
+            console.log("wala");
+            resultsFoundPolicy["errorCode"]="0";
+            resultsFoundPolicy["errorMessage"] = "User Id not found.";
+        
             return res.send(resultsNotFound);
           }
           if (results!==""){
+            console.log("meron");
+            resultsFoundPolicy["errorCode"]="1";
             resultsFoundPolicy["data"]["beneficiary"] = results;
             res.send(resultsFoundPolicy);
             console.log("this is the result"+resultsFoundPolicy);
@@ -296,6 +308,10 @@ module.exports = {
       });
   },
   getPolicyLife: function (req, res) { //Get policy where type is Life
+    resultsFoundPolicy["data"]["policy"] = "";
+    resultsFoundPolicy["data"]["coverage"] = "";
+    resultsFoundPolicy["data"]["beneficiary"] = "";
+    resultsFoundPolicy["data"]["type"] = "";
     pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
 
@@ -320,15 +336,20 @@ module.exports = {
               var bensql = 'SELECT * FROM `tblpolicy` WHERE `userid` = ? and `policynumber` = ?';
               connection.query(bensql, [benid,policynumber], function (error, results, fields) {
                 if (error) {
+                  resultsFoundPolicy["errorCode"]="0";
                   resultsFoundPolicy["errorMessage"] = "Something went wrong with Server." + error;
+                  
                   return res.send(resultsNotFound);
                 }
                 if (results =="") {
+                  resultsFoundPolicy["errorCode"]="0";
                   resultsFoundPolicy["errorMessage"] = "User Id not found.";
+       
                   return res.send(resultsNotFound);
                 }
                 if (results!==""){
-                  console.log(results);
+                 // console.log(results);
+                  resultsFoundPolicy["errorCode"]="1";
                   resultsFoundPolicy["data"]["policy"] = results;
                   res.send(resultsFoundPolicy);
                 }
@@ -340,15 +361,20 @@ module.exports = {
         connection.query(sql, ["life",userid], function (error, results, fields) {
           if (error) {
             console.log(error);
+            resultsFoundPolicy["errorCode"]="0";
             resultsFoundPolicy["errorMessage"] = "Something went wrong with Server." + error;
+        
             return res.send(resultsNotFound);
           }
           if (results =="") {
             console.log("HERE2");
+            resultsFoundPolicy["errorCode"]="0";
             resultsFoundPolicy["errorMessage"] = "User Id not found.";
+        
             return res.send(resultsNotFound);
           }
           if (results!==""){
+            resultsFoundPolicy["errorCode"]="1";
             resultsFoundPolicy["data"]["policy"] = results;
             console.log("HERE");
             //var policynum = resultsFoundPolicy["data"]["policy"][0]["policynumber"];
@@ -357,10 +383,10 @@ module.exports = {
            
             res.send(resultsFoundPolicy);
             //module.exports.getCoverage(request.body.policynum=policynum,response);
-
+           
           }
-         
-          console.log(resultsFoundPolicy);
+          
+          //console.log(resultsFoundPolicy);
           // When done with the connection, release it.
           connection.release(); // Handle error after the release.
           if (error) throw error; // Don't use the connection here, it has been returned to the pool.
@@ -369,6 +395,10 @@ module.exports = {
       });
   },
   getPolicyHealth: function (req, res) { //Get policies where type is Health
+    resultsFoundPolicy["data"]["policy"] = "";
+    resultsFoundPolicy["data"]["coverage"] = "";
+    resultsFoundPolicy["data"]["beneficiary"] = "";
+    resultsFoundPolicy["data"]["type"] = "";
     pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
 
@@ -386,14 +416,19 @@ module.exports = {
         // Use the connection
         connection.query(sql, ["health",uid.userid], function (error, results, fields) {
           if (error) {
+            resultsFoundPolicy["errorCode"]="0";
             resultsFoundPolicy["errorMessage"] = "Something went wrong with Server." + error;
+            
             return res.send(resultsNotFound);
           }
           if (results =="") {
+            resultsFoundPolicy["errorCode"]="0";
             resultsFoundPolicy["errorMessage"] = "User Id not found.";
+      
             return res.send(resultsNotFound);
           }
           if (results!==""){
+            resultsFoundPolicy["errorCode"]="1";
             resultsFoundPolicy["data"]["policy"] = results;
 
             //var policynum = resultsFoundPolicy["data"]["policy"][0]["policynumber"];
@@ -405,7 +440,7 @@ module.exports = {
 
           }
          
-          console.log(resultsFoundPolicy);
+          //console.log(resultsFoundPolicy);
           // When done with the connection, release it.
           connection.release(); // Handle error after the release.
           if (error) throw error; // Don't use the connection here, it has been returned to the pool.
@@ -430,11 +465,14 @@ module.exports = {
         // Use the connection
         connection.query(sql, [uid.userid], function (error, results, fields) {
           if (error) {
+            resultsFoundPolicy["errorCode"]="0";
             resultsFoundPolicy["errorMessage"] = "Something went wrong with Server." + error;
             return res.send(resultsNotFound);
           }
           if (results =="") {
+            resultsFoundPolicy["errorCode"]="0";
             resultsFoundPolicy["errorMessage"] = "User Id not found.";
+            resultsFoundPolicy["data"]["type"]="";
             return res.send(resultsNotFound);
           }
           if (results!==""){
@@ -449,7 +487,7 @@ module.exports = {
 
           }
          
-          console.log(resultsFoundPolicy);
+          //console.log(resultsFoundPolicy);
           // When done with the connection, release it.
           connection.release(); // Handle error after the release.
           if (error) throw error; // Don't use the connection here, it has been returned to the pool.
