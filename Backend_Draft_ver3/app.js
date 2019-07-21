@@ -155,5 +155,15 @@ app.post('/share_policy', jsonParser, function (req, res) {
     dbFunctions.updateShared(req,res);
 });
 
+//**Facebook send and get data endpoints */
+app.post('/fb_ref_scoring', jsonParser, function (req, res) {
+    var dbFunctions = require('./models/connector');
+    dbFunctions.insfbScore(req,res);
+});
+app.get('/fb_ref_scoring', jsonParser, function (req, res) {
+    var dbFunctions = require('./models/connector');
+    dbFunctions.getfbScore(req,res);
+});
+
 app.use('/', (req, res) => res.send("Welcome!"));
 app.listen(process.env.PORT, () => console.log('Server is ready on localhost:' + process.env.PORT));
