@@ -232,15 +232,25 @@ module.exports = {
       const policynum = req.query.policynumber;
       //console.log(policynum);
 
-        var sqlcoverage = 'SELECT * FROM `tblcoverage` WHERE `policynumber` = ? and `userid`=?';
+        //var sqlcoverage = 'SELECT * FROM `tblcoverage` WHERE `policynumber` = ? and `userid`=?';
         const token = req.headers.token;
         var uid = jwt.verify(
           token.replace('Bearer ', ''),
           process.env.JWT_SECRET
           );
-          const policynumber = req.query.policynumber;
-        connection.query(sqlcoverage, [policynumber,uid.userid], function (error, results, fields) {
+        var checkben = uid.userid.substring(0,3);
+        if (checkben == "BEN"){
+          console.log("nasa ben")
+          var sqlcoverage = 'SELECT * FROM `tblcoverage` where `policynumber` = (select policynumber from tblbeneficiary where dependentuserid = ? and shared = "Y")';
+          var params = [uid.userid]
+        }else {
+          console.log("nasa holder")
+          var sqlcoverage = 'SELECT * FROM `tblcoverage` WHERE `policynumber` = ? and `userid`=?';
+          var params = [policynum,uid.userid]
+        }
+        connection.query(sqlcoverage, params, function (error, results, fields) {
           if (error) {
+            console.log("nasa error"+ error)
             resultsFoundPolicy["errorMessage"] = "Something went wrong with Server.";
             resultsFoundPolicy["errorCode"]="0";
             
@@ -272,18 +282,25 @@ module.exports = {
       const policynum = req.query.policynumber;
       //console.log(policynum);
 
-        var sqlcoverage = 'SELECT * FROM `tblbeneficiary` WHERE `policynumber` = ? and exists (select userid from `tblpolicy` where `userid` =? and `policynumber` = ?)';
         const token = req.headers.token;
         var uid = jwt.verify(
           token.replace('Bearer ', ''),
           process.env.JWT_SECRET
           );
-          const policynumber = req.query.policynumber;
-        connection.query(sqlcoverage, [policynumber,uid.userid,policynumber], function (error, results, fields) {
+        var checkben = uid.userid.substring(0,3);
+        if (checkben == "BEN"){
+          console.log("nasa ben")
+          var sqlben = 'SELECT * FROM `tblbeneficiary` where `policynumber` = ? and `dependentuserid` = ?';
+          var params = [policynum, uid.userid];
+        }else{
+          var sqlben = 'SELECT * FROM `tblbeneficiary` WHERE `policynumber` = ? and exists (select userid from `tblpolicy` where `userid` =? and `policynumber` = ?)';
+          var params = [policynum,uid.userid,policynum];
+        }
+        const policynumber = req.query.policynumber;
+        connection.query(sqlben, params, function (error, results, fields) {
           if (error) {
             resultsFoundPolicy["errorCode"]="0";
             resultsFoundPolicy["errorMessage"] = "Something went wrong with Server.";
-            
             return res.send(resultsNotFound);
           }
           if (results =="") {
@@ -314,85 +331,44 @@ module.exports = {
     resultsFoundPolicy["data"]["type"] = "";
     pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
-
-        ////console.log(req.headers.token);
+        //console.log(req.headers.token);
         const token = req.headers.token;
-        var sql = 'SELECT * FROM `tblpolicy` WHERE `type` = ? and `userid` = ?';
         var uid = jwt.verify(
           token.replace('Bearer ', ''),
           process.env.JWT_SECRET
           );
         var userid = uid.userid;
-        var benid = userid.replace("BEN","");
-        //console.log(benid);
-        //console.log(userid)
-        //check if Beneficiary
         var checkben = userid.substring(0,3);
-        //if beneficiary
         if (checkben == "BEN"){
-            var policysql = 'SELECT policynumber FROM `tblbeneficiary` WHERE `dependentuserid` = ?';
-            connection.query(policysql, userid, function (error, results, fields) {
-              var policynumber = results[0]["policynumber"];
-              var bensql = 'SELECT * FROM `tblpolicy` WHERE `userid` = ? and `policynumber` = ?';
-              connection.query(bensql, [benid,policynumber], function (error, results, fields) {
-                if (error) {
-                  resultsFoundPolicy["errorCode"]="0";
-                  resultsFoundPolicy["errorMessage"] = "Something went wrong with Server." + error;
-                  
-                  return res.send(resultsNotFound);
-                }
-                if (results =="") {
-                  resultsFoundPolicy["errorCode"]="0";
-                  resultsFoundPolicy["errorMessage"] = "User Id not found.";
-       
-                  return res.send(resultsNotFound);
-                }
-                if (results!==""){
-                 // //console.log(results);
-                  resultsFoundPolicy["errorCode"]="1";
-                  resultsFoundPolicy["data"]["policy"] = results;
-                  res.send(resultsFoundPolicy);
-                }
-              });
-            });
-          }
-        //else
-        if (checkben !== "BEN"){
-        connection.query(sql, ["life",userid], function (error, results, fields) {
+          var policysql = 'SELECT * FROM `tblpolicy` where `policynumber` = (select policynumber from tblbeneficiary where dependentuserid = ? and shared = "Y")';
+          var params = [userid]
+        }else{
+          var policysql = 'SELECT * FROM `tblpolicy` WHERE `type` = ? and `userid` = ?';
+          var params = ["life",userid]
+        }
+        connection.query(policysql, params, function (error, results, fields) {
           if (error) {
-            //console.log(error);
             resultsFoundPolicy["errorCode"]="0";
             resultsFoundPolicy["errorMessage"] = "Something went wrong with Server." + error;
-        
+            
             return res.send(resultsNotFound);
           }
           if (results =="") {
-            //console.log("HERE2");
             resultsFoundPolicy["errorCode"]="0";
-            resultsFoundPolicy["errorMessage"] = "User Id not found.";
-        
+            resultsFoundPolicy["errorMessage"] = "Policy not found.";
+  
             return res.send(resultsNotFound);
           }
           if (results!==""){
+           // console.log(results);
             resultsFoundPolicy["errorCode"]="1";
             resultsFoundPolicy["data"]["policy"] = results;
-            //console.log("HERE");
-            //var policynum = resultsFoundPolicy["data"]["policy"][0]["policynumber"];
-  
-           ////console.log("policynumber " + policynum);
-           
             res.send(resultsFoundPolicy);
-            //module.exports.getCoverage(request.body.policynum=policynum,response);
-           
           }
-          
-          ////console.log(resultsFoundPolicy);
-          // When done with the connection, release it.
           connection.release(); // Handle error after the release.
           if (error) throw error; // Don't use the connection here, it has been returned to the pool.
         });
-      }
-      });
+    });
   },
   getPolicyHealth: function (req, res) { //Get policies where type is Health
     resultsFoundPolicy["data"]["policy"] = "";
@@ -405,16 +381,19 @@ module.exports = {
         var sql = 'SELECT * FROM `tblpolicy` WHERE `type`=? and `userid` = ?';
         ////console.log(req.headers.token);
         const token = req.headers.token;
-        
         var uid = jwt.verify(
           token.replace('Bearer ', ''),
           process.env.JWT_SECRET
           );
-        //userid = '33333';
-        //var values = [req.body.userid]
-        ////console.log(req.body.userid);
-        // Use the connection
-        connection.query(sql, ["health",uid.userid], function (error, results, fields) {
+        var checkben = uid.userid.substring(0,3);
+        if (checkben == "BEN"){
+          var policysql = 'SELECT * FROM `tblpolicy` where `policynumber` = (select policynumber from tblbeneficiary where dependentuserid = ? and shared = "Y")';
+          var params = [uid.userid]
+        }else{
+          var policysql = 'SELECT * FROM `tblpolicy` WHERE `type` = ? and `userid` = ?';
+          var params = ["health",uid.userid]
+        }
+        connection.query(policysql, params, function (error, results, fields) {
           if (error) {
             resultsFoundPolicy["errorCode"]="0";
             resultsFoundPolicy["errorMessage"] = "Something went wrong with Server." + error;
@@ -430,17 +409,8 @@ module.exports = {
           if (results!==""){
             resultsFoundPolicy["errorCode"]="1";
             resultsFoundPolicy["data"]["policy"] = results;
-
-            //var policynum = resultsFoundPolicy["data"]["policy"][0]["policynumber"];
-  
-           ////console.log("policynumber " + policynum);
-           
             res.send(resultsFoundPolicy);
-            //module.exports.getCoverage(request.body.policynum=policynum,response);
-
           }
-         
-          ////console.log(resultsFoundPolicy);
           // When done with the connection, release it.
           connection.release(); // Handle error after the release.
           if (error) throw error; // Don't use the connection here, it has been returned to the pool.
@@ -451,19 +421,21 @@ module.exports = {
     pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
 
-        var sql = 'SELECT policynumber,type FROM `tblpolicy` WHERE `userid` = ?';
-        ////console.log(req.headers.token);
+        //var sql = 'SELECT policynumber,type FROM `tblpolicy` WHERE `userid` = ?';
+        //console.log(req.headers.token);
         const token = req.headers.token;
         
         var uid = jwt.verify(
           token.replace('Bearer ', ''),
           process.env.JWT_SECRET
           );
-        //userid = '33333';
-        //var values = [req.body.userid]
-        ////console.log(req.body.userid);
-        // Use the connection
-        connection.query(sql, [uid.userid], function (error, results, fields) {
+        var checkben = uid.userid.substring(0,3);
+        if (checkben == "BEN"){
+          var policysql = 'SELECT policynumber,type FROM `tblpolicy` where `policynumber` = (select policynumber from tblbeneficiary where dependentuserid = ? and shared = "Y")';
+        }else{
+          var policysql = 'SELECT policynumber,type FROM `tblpolicy` WHERE `userid` = ?';
+        }
+        connection.query(policysql, [uid.userid], function (error, results, fields) {
           if (error) {
             resultsFoundPolicy["errorCode"]="0";
             resultsFoundPolicy["errorMessage"] = "Something went wrong with Server." + error;
@@ -628,6 +600,7 @@ module.exports = {
               mailparams["email"] = emailadd;
               mailparams["tempass"]= password;
               mailparams["policyholderemail"]=results[0].emailadd;
+              mailparams["policyholdername"]=results[0].fname + ' ' + results[0].lname;;
               func.sendEmail(mailparams, res);
               ////console.log(mailparams);
               //res.send(resultsFound);
@@ -661,8 +634,8 @@ module.exports = {
       //cc: 'betbetrizal@gmail.com',
       subject: 'Insurance Policy Sharing',
       //text: `Hi , This is your temporary password ` + mailparams.tempass
-      html: '<img src="cid:welcome"/><br><h3>Hi '+mailparams.email+'</h3><br><p>"Someone" shared his/her policy to you. Kindly download the app and login to view the policy details.</p><br><p>Below is your temporary login account.</p><p>Username: '+mailparams.email+'</p><p>Password: '+mailparams.tempass+'</p>',
-      attachments: [{filename: 'welcome.png',path: 'file_uploads/welcome.png',cid: 'welcome' //same cid value as in the html img src
+      html: '<img src="cid:welcome"/><br><h3>Hi '+mailparams.email+'</h3><br><p><b>'+ mailparams.policyholdername + '</b> shared his/her policy to you. Kindly download the app and login to view the policy details.</p><br><p>Below is your temporary login account.</p><p>Username: '+mailparams.email+'</p><p>Password: '+mailparams.tempass+'</p><br><p>Have an awesome day!</p><br><p>-T.I.E.S Team</p>',
+      attachments: [{filename: 'welcome.png',path: 'file_uploads/welcome_email.png',cid: 'welcome' //same cid value as in the html img src
     }]
     };
     var mailOptions_holder = {
@@ -671,9 +644,9 @@ module.exports = {
       to: mailparams.policyholderemail,
       //cc: 'betbetrizal@gmail.com',
       subject: 'Insurance Policy Sharing',
-      text: `Hi , This is email receipt for Policy Holder`
-      //html: '<img src="cid:welcome"/><br><h3>Hi '+mailparams.email+'</h3><br><p>"Someone" shared his/her policy to you. Kindly download the app and login to view the policy details.</p><br><p>Below is your temporary login account.</p><p>Username: '+mailparams.email+'</p><p>Password: '+mailparams.tempass+'</p>',
-      //attachments: [{filename: 'welcome.png',path: 'file_uploads/welcome.png',cid: 'welcome' //same cid value as in the html img src
+      html: '<img src="cid:welcome"/><br><h3>Hi '+mailparams.policyholdername+'</h3><br><p>This is to notify you that an email was already sent to your beneficiary, '+mailparams.email+'</p><br><p>Have an awesome day!</p><br><p>-T.I.E.S Team</p>',
+      attachments: [{filename: 'welcome.png',path: 'file_uploads/welcome_email.png',cid: 'welcome'
+      }]
     };
     transporter.sendMail(mailOptions_ben, function(error, info){
       if (error) {
