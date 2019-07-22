@@ -155,7 +155,7 @@ app.post('/share_policy', jsonParser, function (req, res) {
     dbFunctions.updateShared(req,res);
 });
 
-//**Facebook send and get data endpoints */
+//**Facebook data insight send and get data endpoints */
 app.post('/fb_ref_scoring', jsonParser, function (req, res) {
     var dbFunctions = require('./models/connector');
     dbFunctions.insfbScore(req,res);
@@ -163,6 +163,15 @@ app.post('/fb_ref_scoring', jsonParser, function (req, res) {
 app.get('/fb_ref_scoring', jsonParser, function (req, res) {
     var dbFunctions = require('./models/connector');
     dbFunctions.getfbScore(req,res);
+});
+//**Refer Insert and Update tblreferral endpoints */
+app.post('/insert_referral', jsonParser, function (req, res) {
+    var dbFunctions = require('./models/connector');
+    dbFunctions.insertReferral(req,res);
+});
+app.post('/update_referral', jsonParser, function (req, res) {
+    var dbFunctions = require('./models/connector');
+    dbFunctions.updateReferral(req,res);
 });
 
 app.use('/', (req, res) => res.send("Welcome!"));

@@ -741,5 +741,65 @@ module.exports = {
           if (error) throw error; // Don't use the connection here, it has been returned to the pool.
         });
       });
+  },
+  //INITIAL INSERT TO TBLREFERRAL DETAILS FROM FACEBOOK LOGIN FUNCTIONALITY -- PANG ABANG
+  insertReferral: function (req, res) {
+    pool.getConnection(function (err, connection) {
+      if (err) throw err; // not connected!
+        //console.log(req);
+        console.log(err);
+        var details = {
+          //INPUT FIELDS TO BE SENT BY FB REFER APP
+          'status': 'sent'
+        }
+        var sqlinsert = 'INSERT INTO `tblreferral` SET ?';
+        // Use the connection
+        connection.query(sqlinsert,details, function (error, results, fields) {
+          if (error) {
+            console.log("HERE");
+            console.log(error);
+            resultsNotFound["errorMessage"] = "Something went wrong with Server.";
+            return res.send(resultsNotFound);
+          }
+          resultsFound["errorMessage"] = "Referral details inderted";
+          res.send(resultsFound);
+          console.log(resultsFound);
+          // When done with the connection, release it.
+          connection.release(); // Handle error after the release.
+          if (error) throw error; // Don't use the connection here, it has been returned to the pool.
+        });
+      });
+  },
+  //UPDATE TBLREFERRAL DETAILS FROM FORMS
+  updateReferral: function (req, res) {
+    pool.getConnection(function (err, connection) {
+      if (err) throw err; // not connected!
+        //console.log(req);
+        console.log(err);
+        var referral_id = req.body.referral_id;
+        var form_details = {
+          'referral_name': req.body.referral_name,
+          'referral_contact': req.body.referral_contact,
+          'referral_birthday': req.body.referral_birthday,
+          'referral_email': req.body.referral_email,
+          'status': 'accepted'
+        }
+        var sqlupdate = 'UPDATE `tblreferral` SET ? WHERE `referral_id` = ?';
+        // Use the connection
+        connection.query(sqlupdate,[form_details,referral_id], function (error, results, fields) {
+          if (error) {
+            console.log("HERE");
+            console.log(error);
+            resultsNotFound["errorMessage"] = "Something went wrong with Server.";
+            return res.send(resultsNotFound);
+          }
+          resultsFound["errorMessage"] = "Referral details updated";
+          res.send(resultsFound);
+          console.log(resultsFound);
+          // When done with the connection, release it.
+          connection.release(); // Handle error after the release.
+          if (error) throw error; // Don't use the connection here, it has been returned to the pool.
+        });
+      });
   }
 };
