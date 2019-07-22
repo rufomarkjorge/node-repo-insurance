@@ -92,7 +92,7 @@ module.exports = {
           }
           bcrypt.compare(req.body.inputPassword, results[0].password, function (err, result) {
       if (result == true) {
-        //console.log(results[0].userid);
+        ////console.log(results[0].userid);
         var token = {
           "token": jwt.sign(
             { userid: results[0].userid },
@@ -165,7 +165,7 @@ module.exports = {
           
           res.send(resultsFound);
     
-          console.log(results);
+          //console.log(results);
           }
           
           // When done with the connection, release it.
@@ -180,7 +180,7 @@ module.exports = {
 
         var sql = 'UPDATE user_profile SET ? WHERE userid = ?';
         var userid = [req.body.userid];
-        console.log(req.body.userid);
+        ////console.log(req.body.userid);
         //ADD ALL FIELDS ON var userdetails
         var userdetails = {'fname': req.body.fname, 'lname': req.body.lname, 'mname': req.body.mname};
         // Use the connection
@@ -195,7 +195,7 @@ module.exports = {
           }
           resultsFound["errorMessage"] = "User Details Updated";
           res.send(resultsFound);
-          console.log(results);
+          ////console.log(results);
           // When done with the connection, release it.
           connection.release(); // Handle error after the release.
           if (error) throw error; // Don't use the connection here, it has been returned to the pool.
@@ -207,14 +207,14 @@ module.exports = {
       if (err) throw err; // not connected!
 
         var sql = 'SELECT userid, policynumber, insuredname, status, faceamount, paymentmode, premiumamount, reg_billed_prem, premiumdt, totalamtdue, type, "coverage" FROM `tblpolicy` WHERE `userid` = ?';
-        //console.log(req.headers.token);
+        ////console.log(req.headers.token);
         const token = req.headers.token;
         var uid = jwt.verify(
           token.replace('Bearer ', ''),
           process.env.JWT_SECRET
           );
         //var values = [req.body.userid]
-        //console.log(req.body.userid);
+        ////console.log(req.body.userid);
         // Use the connection
         connection.query(sql, uid.userid, function (error, results, fields) {
           if (error) {
@@ -228,7 +228,7 @@ module.exports = {
           resultsFoundPolicy["data"]["policy"] = results;
         
           res.send(resultsFoundPolicy);
-         // console.log(resultsFoundPolicy);
+         // //console.log(resultsFoundPolicy);
           // When done with the connection, release it.
           connection.release(); // Handle error after the release.
           if (error) throw error; // Don't use the connection here, it has been returned to the pool.
@@ -240,7 +240,7 @@ module.exports = {
     pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
       const policynum = req.query.policynumber;
-      console.log(policynum);
+      //console.log(policynum);
 
         //var sqlcoverage = 'SELECT * FROM `tblcoverage` WHERE `policynumber` = ? and `userid`=?';
         const token = req.headers.token;
@@ -276,7 +276,7 @@ module.exports = {
             resultsFoundPolicy["errorCode"]="1";
             resultsFoundPolicy["data"]["coverage"] = results;
             res.send(resultsFoundPolicy);
-            //console.log("this is the result"+resultsFoundPolicy);
+            ////console.log("this is the result"+resultsFoundPolicy);
             // When done with the connection, release it.
           }
         
@@ -290,7 +290,7 @@ module.exports = {
     pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
       const policynum = req.query.policynumber;
-      console.log(policynum);
+      //console.log(policynum);
 
         const token = req.headers.token;
         var uid = jwt.verify(
@@ -314,18 +314,18 @@ module.exports = {
             return res.send(resultsNotFound);
           }
           if (results =="") {
-            console.log("wala");
+            //console.log("wala");
             resultsFoundPolicy["errorCode"]="0";
             resultsFoundPolicy["errorMessage"] = "User Id not found.";
         
             return res.send(resultsNotFound);
           }
           if (results!==""){
-            console.log("meron");
+            //console.log("meron");
             resultsFoundPolicy["errorCode"]="1";
             resultsFoundPolicy["data"]["beneficiary"] = results;
             res.send(resultsFoundPolicy);
-            console.log("this is the result"+resultsFoundPolicy);
+            //console.log("this is the result"+resultsFoundPolicy);
             // When done with the connection, release it.
           }
         
@@ -389,7 +389,7 @@ module.exports = {
       if (err) throw err; // not connected!
 
         var sql = 'SELECT * FROM `tblpolicy` WHERE `type`=? and `userid` = ?';
-        //console.log(req.headers.token);
+        ////console.log(req.headers.token);
         const token = req.headers.token;
         var uid = jwt.verify(
           token.replace('Bearer ', ''),
@@ -462,14 +462,14 @@ module.exports = {
 
             //var policynum = resultsFoundPolicy["data"]["policy"][0]["policynumber"];
   
-           //console.log("policynumber " + policynum);
+           ////console.log("policynumber " + policynum);
            
             res.send(resultsFoundPolicy);
             //module.exports.getCoverage(request.body.policynum=policynum,response);
 
           }
          
-          //console.log(resultsFoundPolicy);
+          ////console.log(resultsFoundPolicy);
           // When done with the connection, release it.
           connection.release(); // Handle error after the release.
           if (error) throw error; // Don't use the connection here, it has been returned to the pool.
@@ -481,17 +481,17 @@ module.exports = {
       if (err) throw err; // not connected!
 
         var sql = 'SELECT agentid, (select concat(fname," ",lname) from user_profile where userid=tblreferral.referrerid)as referrer, referralid, referral_name, referral_birthday, referral_email, referral_contact, date_referred, life_score, health_score, education_score, status FROM tblreferral WHERE tblreferral.agentid=?';
-        //console.log(req.headers.token);
+        ////console.log(req.headers.token);
         const token = req.headers.token;
         const agent = req.query.agentid;
-        console.log('agent id is: '+agent);
+        //console.log('agent id is: '+agent);
         // var uid = jwt.verify(
         //   token.replace('Bearer ', ''),
         //   process.env.JWT_SECRET
         //   );
         //userid = '33333';
         //var values = [req.body.userid]
-        //console.log(req.body.userid);
+        ////console.log(req.body.userid);
         // Use the connection
         connection.query(sql, [agent], function (error, results, fields) {
           if (error) {
@@ -507,14 +507,14 @@ module.exports = {
 
             //var policynum = resultsFoundPolicy["data"]["policy"][0]["policynumber"];
   
-           //console.log("policynumber " + policynum);
+           ////console.log("policynumber " + policynum);
            
             res.send(resultsFound);
             //module.exports.getCoverage(request.body.policynum=policynum,response);
 
           }
          
-          console.log(resultsFound);
+          //console.log(resultsFound);
           // When done with the connection, release it.
           connection.release(); // Handle error after the release.
           if (error) throw error; // Don't use the connection here, it has been returned to the pool.
@@ -523,7 +523,7 @@ module.exports = {
   },
   //CHATBOT-ver1
   pushChat: function pushChat(req, res) {
-		console.log("PUSHCHAT",req.query.request);
+		//console.log("PUSHCHAT",req.query.request);
 		var params = {
 			botAlias: process.env.botAlias,
 			botName: process.env.botName,
@@ -533,12 +533,12 @@ module.exports = {
 		};
 		lexruntime.postText(params, function(err, data) {
 			if (err) {
-				console.log(err, err.stack);
+				//console.log(err, err.stack);
 				showError('Error:  ' + err.message + ' (see console for details)')
 			}
 			if (data) {
 			sessionAttributes = data.sessionAttributes;
-				console.log("AMAZONLEX",data);
+				//console.log("AMAZONLEX",data);
 				return res.send(data);
 			}
 		});
@@ -547,7 +547,7 @@ module.exports = {
   
   encrypt: function(req,res){
     bcrypt.hash(req.body.inputPassword, saltRounds, function (err, hash) {
-      console.log(hash);
+      //console.log(hash);
   res.send(hash)
     });
 
@@ -576,12 +576,14 @@ module.exports = {
       length: 10,
       numbers: true
       });
+      //console.log('may error' + emailadd + policynumber);
     bcrypt.hash(password, saltRounds, function (err, hash) {
       console.log("THIS is the TEMPORARY PASSWORD", password)
 		  var beninsert = { 'userid': ben+uid.userid,'username':emailadd, 'password': hash, 'role': 'BEN'}
       connection.query(sql, [emailadd, policynumber], function (error, results, fields) {
         if (error) {
           resultsNotFound["errorMessage"] = "Something went wrong with Server.";
+          
           return res.send(resultsNotFound);
         }
         if (results =="") {
@@ -608,8 +610,9 @@ module.exports = {
               mailparams["email"] = emailadd;
               mailparams["tempass"]= password;
               mailparams["policyholderemail"]=results[0].emailadd;
+              mailparams["policyholdername"]=results[0].fname + ' ' + results[0].lname;;
               func.sendEmail(mailparams, res);
-              //console.log(mailparams);
+              ////console.log(mailparams);
               //res.send(resultsFound);
             })
           });
@@ -623,7 +626,7 @@ module.exports = {
 });
   },
   sendEmail: function sendEmail(mailparams, res){
-    console.log(mailparams);
+    //console.log(mailparams);
     var transporter = nodemailer.createTransport(smtpTransport({
       //service: 'gmail',
       host: 'smtp.gmail.com',
@@ -641,8 +644,8 @@ module.exports = {
       //cc: 'betbetrizal@gmail.com',
       subject: 'Insurance Policy Sharing',
       //text: `Hi , This is your temporary password ` + mailparams.tempass
-      html: '<img src="cid:welcome"/><br><h3>Hi '+mailparams.email+'</h3><br><p>"Someone" shared his/her policy to you. Kindly download the app and login to view the policy details.</p><br><p>Below is your temporary login account.</p><p>Username: '+mailparams.email+'</p><p>Password: '+mailparams.tempass+'</p>',
-      attachments: [{filename: 'welcome.png',path: 'file_uploads/welcome.png',cid: 'welcome' //same cid value as in the html img src
+      html: '<img src="cid:welcome"/><br><h3>Hi '+mailparams.email+'</h3><br><p><b>'+ mailparams.policyholdername + '</b> shared his/her policy to you. Kindly download the app and login to view the policy details.</p><br><p>Below is your temporary login account.</p><p>Username: '+mailparams.email+'</p><p>Password: '+mailparams.tempass+'</p><br><p>Have an awesome day!</p><br><p>-T.I.E.S Team</p>',
+      attachments: [{filename: 'welcome.png',path: 'file_uploads/welcome_email.png',cid: 'welcome' //same cid value as in the html img src
     }]
     };
     var mailOptions_holder = {
@@ -651,20 +654,20 @@ module.exports = {
       to: mailparams.policyholderemail,
       //cc: 'betbetrizal@gmail.com',
       subject: 'Insurance Policy Sharing',
-      text: `Hi , This is email receipt for Policy Holder`
-      //html: '<img src="cid:welcome"/><br><h3>Hi '+mailparams.email+'</h3><br><p>"Someone" shared his/her policy to you. Kindly download the app and login to view the policy details.</p><br><p>Below is your temporary login account.</p><p>Username: '+mailparams.email+'</p><p>Password: '+mailparams.tempass+'</p>',
-      //attachments: [{filename: 'welcome.png',path: 'file_uploads/welcome.png',cid: 'welcome' //same cid value as in the html img src
+      html: '<img src="cid:welcome"/><br><h3>Hi '+mailparams.policyholdername+'</h3><br><p>This is to notify you that an email was already sent to your beneficiary, '+mailparams.email+'</p><br><p>Have an awesome day!</p><br><p>-T.I.E.S Team</p>',
+      attachments: [{filename: 'welcome.png',path: 'file_uploads/welcome_email.png',cid: 'welcome'
+      }]
     };
     transporter.sendMail(mailOptions_ben, function(error, info){
       if (error) {
-        console.log(error);
+        //console.log(error);
         resultsNotFound["errorMessage"] = "Email Not Sent. Policy not shared.";
         //func.updateShared(req, res);
         return res.send(resultsNotFound);
       } else {
-        console.log(mailparams.policyholderemail);
+        //console.log(mailparams.policyholderemail);
         transporter.sendMail(mailOptions_holder, function(error, info){
-          console.log('Email sent: ' + info.response);
+          //console.log('Email sent: ' + info.response);
           resultsFound["errorMessage"] = "Email Sent.";
           res.send(resultsFound);
           });

@@ -16,13 +16,13 @@ module.exports = {
       },
     checkJWTToken: function(req, res) {
         const token = req.headers.token;
-        console.log('this is the header: '+token);
+        //console.log('this is the header: '+token);
         if (!token) res.sendStatus(400);
         const decoded = jwt.verify(
         token.replace('Bearer ', ''),
         process.env.JWT_SECRET
         );
-        //console.log(decoded["email"]);
+        ////console.log(decoded["email"]);
         resultsNotFound["errorMessage"] = "Your token in not valid, please logoff and login again.";
         if (!decoded) return res.send(resultsNotFound);
     }
