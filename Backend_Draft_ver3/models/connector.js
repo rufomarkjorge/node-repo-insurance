@@ -690,5 +690,76 @@ module.exports = {
           });
       }
     });
+  },
+  insfbScore: function (req, res) {
+    pool.getConnection(function (err, cinsonnection) {
+      if (err) throw err; // not connected!
+        //console.log(req);
+        console.log(err);
+        var sql = 'INSERT INTO score_tbl SET ?';
+        //ADD ALL FIELDS ON var userdetails
+        var scoretbl = {'batch_timestamp': req.body.batch_timestamp,
+                        'referrer_fb_name': req.body.referrer_fb_name, 
+                        'referrer_fb_id': req.body.referrer_fb_id,
+                        'referrer_app_name': req.body.referrer_app_name, 
+                        'referrer_ap_id': req.body.referrer_ap_id,
+                        'referral_name': req.body.referral_name,
+                        'referral_id': req.body.referral_id,
+                        'product': req.body.product,
+                        'friendship_mutual_score': req.body.friendship_mutual_score,
+                        'friendship_score': req.body.friendship_score,
+                        'profile_work_score': req.body.profile_work_score,
+                        'profile_age_score': req.body.profile_age_score,
+                        'profile_rel_score': req.body.profile_rel_score,
+                        'profile_score': req.body.profile_score,
+                        'feed_positive_score': req.body.feed_positive_score,
+                        'feed_events_score': req.body.feed_events_score,
+                        'feed_negative_score': req.body.feed_negative_score,
+                        'feed_score': req.body.feed_score,
+                        'total_score': req.body.total_score,
+                        'agent_id': req.body.agent_id,
+                        'status': req.body.status,
+                        'timestamp': Date.now()
+                      };
+        // Use the connection
+        connection.query(sql, scoretbl, function (error, results, fields) {
+          if (error) {
+            console.log("HERE");
+            console.log(error);
+            resultsNotFound["errorMessage"] = "Something went wrong with Server.";
+            return res.send(resultsNotFound);
+          }
+          resultsFound["errorMessage"] = "Score table Updated";
+          res.send(resultsFound);
+          console.log(resultsFound);
+          // When done with the connection, release it.
+          connection.release(); // Handle error after the release.
+          if (error) throw error; // Don't use the connection here, it has been returned to the pool.
+        });
+      });
+  },
+  getfbScore: function (req, res) {
+    pool.getConnection(function (err, connection) {
+      if (err) throw err; // not connected!
+        //console.log(req);
+        console.log(err);
+        var fb_id = req.body.referrer_id;
+        var sql = 'SELECT batch_timestamp,referrer_fb_name,referrer_fb_id,referrer_app_name,referrer_app_id,referral_name,referral_id,product,total_score,agent_id,status,timestamp FROM `score_tbl` WHERE `referrer_id`=?';
+        // Use the connection
+        connection.query(sql,fb_id, function (error, results, fields) {
+          if (error) {
+            console.log("HERE");
+            console.log(error);
+            resultsNotFound["errorMessage"] = "Something went wrong with Server.";
+            return res.send(resultsNotFound);
+          }
+          resultsFound["errorMessage"] = "Selected all";
+          res.send(results);
+          console.log(resultsFound);
+          // When done with the connection, release it.
+          connection.release(); // Handle error after the release.
+          if (error) throw error; // Don't use the connection here, it has been returned to the pool.
+        });
+      });
   }
 };
