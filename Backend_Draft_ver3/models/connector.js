@@ -130,7 +130,7 @@ module.exports = {
     pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
 
-        var sql = 'SELECT * FROM user_profile JOIN tblpolicy ON user_profile.userid = tblpolicy.userid WHERE user_profile.userid = ?';
+        //var sql = 'SELECT * FROM user_profile JOIN tblpolicy ON user_profile.userid = tblpolicy.userid WHERE user_profile.userid = ?';
         //var values = [req.body.userid];
         //get userid using token
         const token = req.headers.token;
@@ -138,9 +138,19 @@ module.exports = {
           token.replace('Bearer ', ''),
           process.env.JWT_SECRET
           );
+        var checkben = uid.userid.substring(0,3);
+        if (checkben == "BEN"){
+          console.log("nasa ben")
+          var sqluser = 'SELECT * FROM `tblbeneficiary` where `emailadd` = (select username from login where userid = ?)';
+          var params = [uid.userid]
+        }else {
+          console.log("nasa holder")
+          var sqluser = 'SELECT * FROM user_profile JOIN tblpolicy ON user_profile.userid = tblpolicy.userid WHERE user_profile.userid = ?';
+          var params = [uid.userid]
+        }
         //console.log(uid.userid);
         // Use the connection
-        connection.query(sql, uid.userid, function (error, results, fields) {
+        connection.query(sqluser, params, function (error, results, fields) {
           console.log(results);
           if (error) {
             resultsNotFound["errorMessage"] = "Something went wrong with Server.";
@@ -155,7 +165,7 @@ module.exports = {
           
           res.send(resultsFound);
     
-        //  console.log(results);
+          console.log(results);
           }
           
           // When done with the connection, release it.
