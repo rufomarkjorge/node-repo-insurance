@@ -675,17 +675,18 @@ module.exports = {
     });
   },
   insfbScore: function (req, res) {
-    pool.getConnection(function (err, cinsonnection) {
+    pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
         //console.log(req);
         console.log(err);
         var sql = 'INSERT INTO score_tbl SET ?';
+        var date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
         //ADD ALL FIELDS ON var userdetails
         var scoretbl = {'batch_timestamp': req.body.batch_timestamp,
                         'referrer_fb_name': req.body.referrer_fb_name, 
                         'referrer_fb_id': req.body.referrer_fb_id,
                         'referrer_app_name': req.body.referrer_app_name, 
-                        'referrer_ap_id': req.body.referrer_ap_id,
+                        'referrer_app_id': req.body.referrer_app_id,
                         'referral_name': req.body.referral_name,
                         'referral_id': req.body.referral_id,
                         'product': req.body.product,
@@ -702,7 +703,7 @@ module.exports = {
                         'total_score': req.body.total_score,
                         'agent_id': req.body.agent_id,
                         'status': req.body.status,
-                        'timestamp': Date.now()
+                        'timestamp': date
                       };
         // Use the connection
         connection.query(sql, scoretbl, function (error, results, fields) {
