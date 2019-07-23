@@ -7,7 +7,7 @@ const cors = require('cors');
 
 //**for upload files */
 const  multipart  =  require('connect-multiparty');
-const  multipartMiddleware  =  multipart({ uploadDir:  './file_uploads' });
+const  multipartMiddleware  =  multipart({uploadDir: './models/tmp_files'});
 //**for upload files */
 
 // ****** allow cross-origin requests code START ****** //
@@ -131,9 +131,9 @@ app.post('/bot', jsonParser, function (req, res) {
 app.post('/file_upload', multipartMiddleware, function (req, res) {
     console.log(req);
     if(valFunctions.checkJWTToken(req,res)) return false;
-    res.json({
-        'message': 'File uploaded successfully'
-    });
+    console.log('File uploaded successfully')
+    var dbFunctions = require('./models/ocr');
+    dbFunctions.verifyOCR(req,res);
 });
 
 app.post('/encrypt', jsonParser, function (req, res) {
