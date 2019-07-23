@@ -203,10 +203,11 @@ module.exports = {
       });
   },
   getPolicy: function (req, res) {
+    console.log(req);
     pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
 
-        var sql = 'SELECT userid, policynumber, insuredname, status, faceamount, paymentmode, premiumamount, reg_billed_prem, premiumdt, totalamtdue, type, "coverage" FROM `tblpolicy` WHERE `userid` = ?';
+        var sql = 'SELECT userid, policynumber,type FROM `tblpolicy` WHERE `userid` = ?';
         ////console.log(req.headers.token);
         const token = req.headers.token;
         var uid = jwt.verify(
