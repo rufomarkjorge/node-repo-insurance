@@ -727,8 +727,8 @@ module.exports = {
       if (err) throw err; // not connected!
         //console.log(req);
         console.log(err);
-        var fb_id = req.body.referrer_id;
-        var sql = 'SELECT batch_timestamp,referrer_fb_name,referrer_fb_id,referrer_app_name,referrer_app_id,referral_name,referral_id,product,total_score,agent_id,status,timestamp FROM `score_tbl` WHERE `referrer_id`=?';
+        var fb_id = req.query.referrer_fb_id;
+        var sql = 'SELECT * FROM `score_tbl` WHERE `referrer_fb_id`=?';
         // Use the connection
         connection.query(sql,fb_id, function (error, results, fields) {
           if (error) {
