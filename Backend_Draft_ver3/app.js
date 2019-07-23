@@ -14,6 +14,10 @@ const  multipartMiddleware  =  multipart({uploadDir: './models/tmp_files'});
 app.use(cors()); // uncomment this to enable all CORS and delete cors(corsOptions) in below code
 const allowedOrigins = process.env.allowedOrigins.split(',');
 app.use(express.static('img/profile'));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
 /**
 app.use(cors({
     origin: function (origin, callback) {
@@ -130,6 +134,9 @@ app.post('/bot', jsonParser, function (req, res) {
 //**file upload */
 app.post('/file_upload', multipartMiddleware, function (req, res) {
     console.log(req);
+    for (var i = 0; i < req.files.uploads.length; i++) {
+     console.log(req.files.uploads[i]);
+    }
     if(valFunctions.checkJWTToken(req,res)) return false;
     console.log('File uploaded successfully')
     var dbFunctions = require('./models/ocr');
@@ -172,6 +179,10 @@ app.post('/insert_referral', jsonParser, function (req, res) {
 app.post('/update_referral', jsonParser, function (req, res) {
     var dbFunctions = require('./models/connector');
     dbFunctions.updateReferral(req,res);
+});
+app.post('/getpolicy', jsonParser, function (req, res) {
+    var dbFunctions = require('./models/connector');
+    dbFunctions.getPolicy(req,res);
 });
 
 app.use('/', (req, res) => res.send("Welcome!"));

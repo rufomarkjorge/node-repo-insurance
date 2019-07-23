@@ -15,6 +15,7 @@ var message = {
 
 module.exports = {
     verifyOCR: function (req, res) {
+        console.log(req);
         const token = req.headers.token;
         var uid = jwt.verify(
           token.replace('Bearer ', ''),
@@ -23,9 +24,9 @@ module.exports = {
         var userid = uid.userid;
         var id = userid.replace("BEN","");
         var uploadir = __dirname+"/file_uploads" + "/"+id;
-        var tmpath = req.files.file.path;
+        var tmpath = req.files.uploads[0].path;
         var tmpname = tmpath.replace("models\\tmp_files\\","");
-        var ogname = req.files.file.name;
+        var ogname = req.files.uploads[0].name;
         var newdir = uploadir+"/"+ogname;
         if (!fs.existsSync(uploadir)){
             fs.mkdirSync(uploadir);

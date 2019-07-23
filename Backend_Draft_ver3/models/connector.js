@@ -203,10 +203,11 @@ module.exports = {
       });
   },
   getPolicy: function (req, res) {
+    console.log(req);
     pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
 
-        var sql = 'SELECT userid, policynumber, insuredname, status, faceamount, paymentmode, premiumamount, reg_billed_prem, premiumdt, totalamtdue, type, "coverage" FROM `tblpolicy` WHERE `userid` = ?';
+        var sql = 'SELECT userid, policynumber,type FROM `tblpolicy` WHERE `userid` = ?';
         ////console.log(req.headers.token);
         const token = req.headers.token;
         var uid = jwt.verify(
@@ -800,6 +801,54 @@ module.exports = {
           resultsFound["errorMessage"] = "Referral details updated";
           res.send(resultsFound);
           console.log(resultsFound);
+          // When done with the connection, release it.
+          connection.release(); // Handle error after the release.
+          if (error) throw error; // Don't use the connection here, it has been returned to the pool.
+        });
+      });
+  },
+  getRewards: function (req, res) {
+    pool.getConnection(function (err, connection) {
+      if (err) throw err; // not connected!
+
+        //var sql = 'SELECT * FROM user_profile JOIN tblpolicy ON user_profile.userid = tblpolicy.userid WHERE user_profile.userid = ?';
+        //var values = [req.body.userid];
+        //get userid using token
+        const token = req.headers.token;
+        var uid = jwt.verify(
+          token.replace('Bearer ', ''),
+          process.env.JWT_SECRET
+          );
+        var checkben = uid.userid.substring(0,3);
+        if (checkben == "BEN"){
+          console.log("nasa ben")
+          var sqluser = 'SELECT * FROM `tblbeneficiary` where `emailadd` = (select username from login where userid = ?)';
+          var params = [uid.userid]
+        }else {
+          console.log("nasa holder")
+          var sqluser = 'SELECT * FROM user_profile JOIN tblpolicy ON user_profile.userid = tblpolicy.userid WHERE user_profile.userid = ?';
+          var params = [uid.userid]
+        }
+        //console.log(uid.userid);
+        // Use the connection
+        connection.query(sqluser, params, function (error, results, fields) {
+          console.log(results);
+          if (error) {
+            resultsNotFound["errorMessage"] = "Something went wrong with Server.";
+            return res.send(resultsNotFound);
+          }
+          if (results =="") {
+            resultsNotFound["errorMessage"] = "User Id not found.";
+            return res.send(resultsNotFound);
+          }
+           if(results !=="") {
+            resultsFound["data"] = results;
+          
+          res.send(resultsFound);
+    
+          //console.log(results);
+          }
+          
           // When done with the connection, release it.
           connection.release(); // Handle error after the release.
           if (error) throw error; // Don't use the connection here, it has been returned to the pool.
