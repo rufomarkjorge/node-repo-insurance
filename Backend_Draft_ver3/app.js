@@ -70,7 +70,7 @@ app.post('/profile', jsonParser, function (req, res) {
     var dbFunctions = require('./models/connector');
     dbFunctions.updateUser(req,res);
 });
-app.get('/getpolicy', jsonParser, function (req, res) {
+app.post('/getpolicy', jsonParser, function (req, res) {
     if(valFunctions.checkInputDataNULL(req,res)) return false;
     if(valFunctions.checkInputDataQuality(req,res)) return false;
     if(valFunctions.checkJWTToken(req,res)) return false;
@@ -190,7 +190,7 @@ app.get('/getclaims', jsonParser, function (req, res) {
     var dbFunctions = require('./models/connector');
     dbFunctions.getClaims(req,res);
 });
-app.post('/getclaims', jsonParser, function (req, res) {
+app.post('/submitclaims', jsonParser, function (req, res) {
     if(valFunctions.checkInputDataNULL(req,res)) return false;
     if(valFunctions.checkInputDataQuality(req,res)) return false;
     if(valFunctions.checkJWTToken(req,res)) return false;
