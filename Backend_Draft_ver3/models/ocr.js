@@ -45,17 +45,19 @@ module.exports = {
                         if (err) throw err
                         console.log('Successfully moved!')
                       });
-                }
-                //check if death certificate
-                if (text.includes("DEATH") == true){
+                }else if (text.includes("DEATH") == true){
                     message["message"] = "Death Certificate Uploaded";
                     console.log(text);
                     fs.rename(temp_dir, newdir, function (err) {
                         if (err) throw err
                         console.log('Successfully moved!')
                       });
+                }else{
+                    message["message"] = "Document is not valid";
                 }
-                message["message"] = "Document is not valid";
+
+              
+                
                 return res.send(message);
             }
         });
