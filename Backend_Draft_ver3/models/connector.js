@@ -207,17 +207,21 @@ module.exports = {
     pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
 
-        var sql = 'SELECT userid, policynumber,type FROM `tblpolicy` WHERE `userid` = ?';
+        // var sql = 'SELECT userid, policynumber,type FROM `tblpolicy` WHERE `userid` = ?';
         ////console.log(req.headers.token);
         const token = req.headers.token;
         var uid = jwt.verify(
           token.replace('Bearer ', ''),
           process.env.JWT_SECRET
           );
-        //var values = [req.body.userid]
-        ////console.log(req.body.userid);
+        var checkben = uid.userid.substring(0,3);
+        if (checkben == "BEN"){
+          var policysql = 'SELECT userid, policynumber,type FROM `tblpolicy` where `policynumber` = (select policynumber from tblbeneficiary where dependentuserid = ? and shared = "Y")';
+        }else{
+          var policysql = 'SELECT userid, policynumber,type FROM `tblpolicy` WHERE `userid` = ?';
+        }
         // Use the connection
-        connection.query(sql, uid.userid, function (error, results, fields) {
+        connection.query(policysql, uid.userid, function (error, results, fields) {
           if (error) {
             resultsFoundPolicy["errorMessage"] = "Something went wrong with Server.";
             return res.send(resultsFoundPolicy);
@@ -227,7 +231,6 @@ module.exports = {
             return res.send(resultsFoundPolicy);
           }
           resultsFoundPolicy["data"]["policy"] = results;
-        
           res.send(resultsFoundPolicy);
          // //console.log(resultsFoundPolicy);
           // When done with the connection, release it.
@@ -728,8 +731,8 @@ module.exports = {
       if (err) throw err; // not connected!
         //console.log(req);
         console.log(err);
-        var fb_id = req.body.referrer_id;
-        var sql = 'SELECT batch_timestamp,referrer_fb_name,referrer_fb_id,referrer_app_name,referrer_app_id,referral_name,referral_id,product,total_score,agent_id,status,timestamp FROM `score_tbl` WHERE `referrer_id`=?';
+        var fb_id = req.query.referrer_fb_id;
+        var sql = 'SELECT * FROM `score_tbl` WHERE `referrer_fb_id`=?';
         // Use the connection
         connection.query(sql,fb_id, function (error, results, fields) {
           if (error) {
@@ -849,6 +852,67 @@ module.exports = {
           //console.log(results);
           }
           
+          // When done with the connection, release it.
+          connection.release(); // Handle error after the release.
+          if (error) throw error; // Don't use the connection here, it has been returned to the pool.
+        });
+      });
+  },
+  //CLAIMS
+  insClaims: function (req, res) {
+    pool.getConnection(function (err, connection) {
+      if (err) throw err; // not connected!
+        const token = req.headers.token;
+        var uid = jwt.verify(
+          token.replace('Bearer ', ''),
+          process.env.JWT_SECRET
+          );
+        var policynumber = req.body.policynumber;
+        var claims_desc = req.body.claimdesc;
+        var userid = uid.userid;
+        var date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+        var insql = 'INSERT INTO `tblclaims` SET ?';
+        var params = {
+          "claims_userid": userid,
+          "policynumber": policynumber,
+          "claim_desc": claims_desc,
+          "date_req" : date,
+          "status" : "For Approval"
+        }
+        connection.query(insql, params, function (error, results, fields) {
+          if (error) {
+            console.log(error)
+            resultsNotFound["errorMessage"] = "Something went wrong with Server.";
+            return res.send(resultsNotFound);
+          }
+          res.send(resultsFound);
+          // When done with the connection, release it.
+          connection.release(); // Handle error after the release.
+          if (error) throw error; // Don't use the connection here, it has been returned to the pool.
+        });
+      });
+  },
+  getClaims: function (req, res) {
+    pool.getConnection(function (err, connection) {
+      if (err) throw err; // not connected!
+        const token = req.headers.token;
+        var uid = jwt.verify(
+          token.replace('Bearer ', ''),
+          process.env.JWT_SECRET
+          );
+        var userid = uid.userid;
+        var selectclaims = 'SELECT policynumber, claim_desc, date_req, status FROM `tblclaims` WHERE claims_userid = ?';
+        connection.query(selectclaims, userid, function (error, results, fields) {
+          if (error) {
+            resultsNotFound["errorMessage"] = "Something went wrong with Server.";
+            return res.send(resultsNotFound);
+          }
+          if (results =="") {
+            resultsNotFound["errorMessage"] = "User Id not found.";
+            return res.send(resultsNotFound);
+          }
+          resultsFound["data"] = results;
+          res.send(resultsFound);
           // When done with the connection, release it.
           connection.release(); // Handle error after the release.
           if (error) throw error; // Don't use the connection here, it has been returned to the pool.
