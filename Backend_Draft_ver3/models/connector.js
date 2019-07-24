@@ -681,12 +681,13 @@ module.exports = {
   insfbScore: function (req, res) {
     pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
-        //console.log(req);
+        console.log(req.body.batch_timestamp);
         console.log(err);
         var sql = 'INSERT INTO score_tbl SET ?';
         var date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+        var longDate = new Date(Date(req.body.batch_timestamp)).getTime();
         //ADD ALL FIELDS ON var userdetails
-        var scoretbl = {'batch_timestamp': req.body.batch_timestamp,
+        var scoretbl = {'batch_timestamp': new Date(longDate),
                         'referrer_fb_name': req.body.referrer_fb_name, 
                         'referrer_fb_id': req.body.referrer_fb_id,
                         'referrer_app_name': req.body.referrer_app_name, 
@@ -735,7 +736,7 @@ module.exports = {
         var sql = 'SELECT * FROM `score_tbl` WHERE `referrer_fb_id`=?';
         // Use the connection
         connection.query(sql,fb_id, function (error, results, fields) {
-          if (error) {
+          if (error || !results) {
             console.log("HERE");
             console.log(error);
             resultsNotFound["errorMessage"] = "Something went wrong with Server.";
@@ -750,28 +751,45 @@ module.exports = {
         });
       });
   },
-  //INITIAL INSERT TO TBLREFERRAL DETAILS FROM FACEBOOK LOGIN FUNCTIONALITY -- PANG ABANG
+  //UPDATE TO SCORE_TBL DETAILS FROM FACEBOOK LOGIN FUNCTIONALITY -- use fb_id in inserting app_id, etc to score
   insertReferral: function (req, res) {
     pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
         //console.log(req);
         console.log(err);
-        var details = {
-          //INPUT FIELDS TO BE SENT BY FB REFER APP
-          'status': 'sent'
-        }
-        var sqlinsert = 'INSERT INTO `tblreferral` SET ?';
-        // Use the connection
-        connection.query(sqlinsert,details, function (error, results, fields) {
-          if (error) {
-            console.log("HERE");
+        //get user details from from user_profile using mapped userid/token
+        const token = req.headers.token;
+        var uid = jwt.verify(
+          token.replace('Bearer ', ''),
+          process.env.JWT_SECRET
+          );
+        var appuserid = uid.userid;
+        var sqldetails = 'SELECT concat(fname," ",lname) as name, agentid FROM `user_profile` WHERE userid = ?';
+        connection.query(sqldetails,appuserid, function (error, results, fields) {
+          if (error || !results) {
             console.log(error);
             resultsNotFound["errorMessage"] = "Something went wrong with Server.";
             return res.send(resultsNotFound);
           }
-          resultsFound["errorMessage"] = "Referral details inderted";
-          res.send(resultsFound);
-          console.log(resultsFound);
+          var fb_id = req.body.referrer_fb_id;
+          var name = results[0]["name"];
+          var agentid = results[0]["agentid"];
+          var params = {
+            "referrer_app_id": appuserid,
+            "referrer_app_name": name,
+            "agent_id": agentid
+          }
+          console.log(req.body.referrer_fb_id);
+          var insql = 'UPDATE `score_tbl` SET ? WHERE referrer_fb_id = ?';
+          connection.query(insql,[params,fb_id], function (error, results, fields) {
+            if (error || !results) {
+              console.log(error);
+              resultsNotFound["errorMessage"] = "Something went wrong with Server.";
+              return res.send(resultsNotFound);
+            }
+            resultsFound["errorMessage"] = "User Details updated.";
+            res.send(resultsFound);
+          });
           // When done with the connection, release it.
           connection.release(); // Handle error after the release.
           if (error) throw error; // Don't use the connection here, it has been returned to the pool.

@@ -171,8 +171,9 @@ app.get('/fb_ref_scoring', jsonParser, function (req, res) {
     var dbFunctions = require('./models/connector');
     dbFunctions.getfbScore(req,res);
 });
-//**Refer Insert and Update tblreferral endpoints */
+//**Refer Insert and Update score_tbl with fb details endpoints */
 app.post('/insert_referral', jsonParser, function (req, res) {
+    if(valFunctions.checkJWTToken(req,res)) return false;
     var dbFunctions = require('./models/connector');
     dbFunctions.insertReferral(req,res);
 });
