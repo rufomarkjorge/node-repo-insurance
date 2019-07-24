@@ -41,16 +41,21 @@ module.exports = {
                 if (text.includes("BIRTH") == true){
                     message["message"] = "Birth Certificate Uploaded";
                     console.log(text);
+                    fs.rename(temp_dir, newdir, function (err) {
+                        if (err) throw err
+                        console.log('Successfully moved!')
+                      });
                 }
                 //check if death certificate
                 if (text.includes("DEATH") == true){
                     message["message"] = "Death Certificate Uploaded";
                     console.log(text);
+                    fs.rename(temp_dir, newdir, function (err) {
+                        if (err) throw err
+                        console.log('Successfully moved!')
+                      });
                 }
-                fs.rename(temp_dir, newdir, function (err) {
-                         if (err) throw err
-                         console.log('Successfully moved!')
-                       });
+                message["message"] = "Document is not valid";
                 return res.send(message);
             }
         });
