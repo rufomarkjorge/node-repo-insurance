@@ -188,6 +188,7 @@ app.get('/getclaims', jsonParser, function (req, res) {
     //if(valFunctions.checkUserAuthRole(req,res)) return false;
     var dbFunctions = require('./models/connector');
     dbFunctions.getClaims(req,res);
+});
 app.post('/getclaims', jsonParser, function (req, res) {
     if(valFunctions.checkInputDataNULL(req,res)) return false;
     if(valFunctions.checkInputDataQuality(req,res)) return false;
@@ -195,6 +196,6 @@ app.post('/getclaims', jsonParser, function (req, res) {
     //if(valFunctions.checkUserAuthRole(req,res)) return false;
     var dbFunctions = require('./models/connector');
     dbFunctions.insClaims(req,res);
-
+});
 app.use('/', (req, res) => res.send("Welcome!"));
 app.listen(process.env.PORT, () => console.log('Server is ready on localhost:' + process.env.PORT));
