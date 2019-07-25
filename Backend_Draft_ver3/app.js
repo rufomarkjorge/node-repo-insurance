@@ -177,6 +177,10 @@ app.post('/insert_referral', jsonParser, function (req, res) {
     var dbFunctions = require('./models/connector');
     dbFunctions.insertReferral(req,res);
 });
+app.post('/update_status', jsonParser, function (req, res) {
+    var dbFunctions = require('./models/connector');
+    dbFunctions.updateStatus(req,res);
+});
 app.post('/update_referral', jsonParser, function (req, res) {
     var dbFunctions = require('./models/connector');
     dbFunctions.updateReferral(req,res);

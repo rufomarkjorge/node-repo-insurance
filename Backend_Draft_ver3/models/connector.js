@@ -483,11 +483,9 @@ module.exports = {
   getReferral: function (req, res) { //Get policy where type is Life
     pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
-
-        var sql = 'SELECT agentid, (select concat(fname," ",lname) from user_profile where userid=tblreferral.referrerid)as referrer, referralid, referral_name, referral_birthday, referral_email, referral_contact, date_referred, life_score, health_score, education_score, status FROM tblreferral WHERE tblreferral.agentid=?';
-        ////console.log(req.headers.token);
+        var sql = 'SELECT agent_id, referrer_app_name, referral_id, referral_name, referral_birthday, referral_emailadd, referral_contactnumber, date_referred, product, total_score, status FROM score_tbl WHERE score_tbl.agent_id=?';
         const token = req.headers.token;
-        const agent = req.query.agentid;
+        const agent = req.query.agent_id;
         //console.log('agent id is: '+agent);
         // var uid = jwt.verify(
         //   token.replace('Bearer ', ''),
@@ -497,7 +495,7 @@ module.exports = {
         //var values = [req.body.userid]
         ////console.log(req.body.userid);
         // Use the connection
-        connection.query(sql, [agent], function (error, results, fields) {
+        connection.query(sql, agent, function (error, results, fields) {
           if (error) {
             resultsNotFound["errorMessage"] = "Something went wrong with Server." + error;
             return res.send(resultsNotFound);
@@ -755,7 +753,7 @@ module.exports = {
   insertReferral: function (req, res) {
     pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
-        //console.log(req);
+        console.log(req);
         console.log(err);
         //get user details from from user_profile using mapped userid/token
         const token = req.headers.token;
@@ -796,23 +794,55 @@ module.exports = {
         });
       });
   },
-  //UPDATE TBLREFERRAL DETAILS FROM FORMS
+  //UPDATE STATUS if already sent a message
+  updateStatus: function (req, res) {
+    pool.getConnection(function (err, connection) {
+      if (err) throw err; // not connected!
+        console.log(req);
+        console.log(err);
+        var referral_id = req.body.referral_id;
+        var referrer_fb_id = req.body.referrer_fb_id;
+        var date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+        var params = {
+          "status": "referred",
+          "date_referred": date
+        };
+        var sqlupdate = 'UPDATE `score_tbl` SET ? WHERE `referral_id` = ? and `referrer_fb_id` = ?';
+        // Use the connection
+        connection.query(sqlupdate,[params,referral_id, referrer_fb_id], function (error, results, fields) {
+          if (error || !results) {
+            console.log("HERE");
+            console.log(error);
+            resultsNotFound["errorMessage"] = "Something went wrong with Server.";
+            return res.send(resultsNotFound);
+          }
+          resultsFound["errorMessage"] = "Status changed to referred";
+          res.send(resultsFound);
+          console.log(resultsFound);
+          // When done with the connection, release it.
+          connection.release(); // Handle error after the release.
+          if (error) throw error; // Don't use the connection here, it has been returned to the pool.
+        });
+      });
+  },
+  //UPDATE SCORE_TBL DETAILS FROM FORMS
   updateReferral: function (req, res) {
     pool.getConnection(function (err, connection) {
       if (err) throw err; // not connected!
         //console.log(req);
         console.log(err);
         var referral_id = req.body.referral_id;
+        var referrer_fb_id = req.body.referrer_fb_id;
         var form_details = {
           'referral_name': req.body.referral_name,
-          'referral_contact': req.body.referral_contact,
+          'referral_contactnumber': req.body.referral_contact,
           'referral_birthday': req.body.referral_birthday,
-          'referral_email': req.body.referral_email,
+          'referral_emailadd': req.body.referral_email,
           'status': 'accepted'
-        }
-        var sqlupdate = 'UPDATE `tblreferral` SET ? WHERE `referral_id` = ?';
+        };
+        var sqlupdate = 'UPDATE `score_tbl` SET ? WHERE `referral_id` = ? and `referrer_fb_id` = ?';
         // Use the connection
-        connection.query(sqlupdate,[form_details,referral_id], function (error, results, fields) {
+        connection.query(sqlupdate,[form_details,referral_id, referrer_fb_id], function (error, results, fields) {
           if (error) {
             console.log("HERE");
             console.log(error);
