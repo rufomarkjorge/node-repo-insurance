@@ -203,4 +203,4 @@ app.post('/submitclaims', jsonParser, function (req, res) {
     dbFunctions.insClaims(req,res);
 });
 app.use('/', (req, res) => res.send("Welcome!"));
-app.listen((process.env.PORT || 3000), () => console.log('Server is ready on localhost:' + (process.env.PORT || 3000)));
+app.listen(process.env.PORT || 3000, () => console.log('Server is ready on localhost:' + process.env.PORT));
